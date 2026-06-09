@@ -1,4 +1,4 @@
-﻿asgiref==3.11.1
+asgiref==3.11.1
 asttokens==3.0.1
 charset-normalizer==3.4.7
 colorama==0.4.6
@@ -40,3 +40,4 @@ wcwidth==0.6.0
 gunicorn==21.2.0
 whitenoise==6.7.0
 psycopg[binary]==3.3.4
+dj-database-url==2.2.0

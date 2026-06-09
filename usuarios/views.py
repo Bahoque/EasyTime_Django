@@ -37,26 +37,20 @@ def es_admin(user):
 # ===================================================================
 
 def home(request):
-    """
-    Si es ADMIN/JEFE: Dashboard con Gestión de Citas (DataTable).
-    Si es CLIENTE/ANÓNIMO: Home normal.
-    """
     if es_admin(request.user):
-        # 1. Estadísticas
         total_usuarios = User.objects.count()
         total_citas = Cita.objects.count()
         hoy = timezone.now().date()
         citas_hoy = Cita.objects.filter(fecha_hora__date=hoy).count()
         
-        citas_gestion = Cita.objects.all().order_by('-fecha_hora') # Lista orden por fechas, todas las citas
-        # 3. Listas cortas para widgets laterales
+        citas_gestion = Cita.objects.all().order_by('-fecha_hora')
         ultimos_usuarios = User.objects.all().order_by('-id')[:5]
 
         context = {
             'total_usuarios': total_usuarios,
             'total_citas': total_citas,
             'citas_hoy': citas_hoy,
-            'citas_gestion': citas_gestion,  # Para la lista de citas recientes
+            'citas_gestion': citas_gestion,
             'ultimos_usuarios': ultimos_usuarios,
             'es_admin_dashboard': True  
         }
@@ -100,7 +94,7 @@ def mi_perfil(request):
 # ===================================================================
 # ADMINISTRACIÓN DE USUARIOS (CRUD)
 # ===================================================================
-# Busqueda por filtros: username, nombre, apellido, email, identificacion
+
 @login_required
 @user_passes_test(es_admin, login_url='home')
 def lista_usuarios(request):
@@ -162,7 +156,7 @@ def eliminar_usuario(request, pk):
     return render(request, 'usuarios/confirmar_eliminacion.html', {'usuario': usuario})
 
 # ===================================================================
-# EXPORTACIÓN DE REPORTES (SCOPE: PÁGINA O TODO)
+# EXPORTACIÓN DE REPORTES
 # ===================================================================
 
 @login_required
@@ -186,36 +180,46 @@ def generar_pdf_usuarios(request):
     p = canvas.Canvas(response, pagesize=letter)
     width, height = letter
 
-    # Estilo y Logo
+    # Encabezado y Logo
     logo_path = os.path.join(settings.BASE_DIR, 'static', 'img', 'favicon.ico')
     if os.path.exists(logo_path):
         p.drawImage(logo_path, 50, height - 75, width=40, height=40, mask='auto')
     
     p.setFont("Helvetica-Bold", 16)
-    p.setFillColor(colors.HexColor("#0d6efd")) # ✅ HexColor corregido
+    p.setFillColor(colors.HexColor("#0d6efd"))
     p.drawString(100, height - 55, "EASYTIME - Reporte de Usuarios")
     p.setFont("Helvetica", 9)
     p.setFillColor(colors.grey)
     p.drawString(100, height - 70, f"{subtitulo} | Generado por: {request.user.username}")
 
-    # Tabla (Uso de 'identificacion')
+    # Tabla de datos
     headers = [['ID', 'Identificación', 'Nombre', 'Rol', 'Estado']]
     data = headers
     for user in usuarios_reporte:
         doc = getattr(user, 'identificacion', 'N/A') or 'N/A'
         nombre = f"{user.first_name} {user.last_name}" if user.first_name else user.username
-        data.append([user.id, doc, nombre, getattr(user, 'rol', 'CLIENTE'), "Activo" if user.is_active else "Inactivo"])
+        rol = getattr(user, 'rol', 'CLIENTE')
+        estado = "Activo" if user.is_active else "Inactivo"
+        data.append([user.id, doc, nombre, rol, estado])
 
-    t = Table(data, colWidths=[40, 100, 200, 90, 70])
-    t.setStyle(TableStyle([
+    tabla = Table(data, colWidths=[40, 100, 180, 80, 80])
+    style = TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#0d6efd")),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('GRID', (0, 0), (-1, -1), 0.5, colors.fade(colors.grey, 0.5)),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor("#f8fafc")]),
-    ]))
-    t.wrapOn(p, width, height)
-    t.drawOn(p, 50, height - 130 - (len(data) * 18))
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+    ])
+    
+    # Filas alternas (Cebreado) corregido
+    for i in range(1, len(data)):
+        if i % 2 == 0:
+            style.add('BACKGROUND', (0, i), (-1, i), colors.whitesmoke)
+
+    tabla.setStyle(style)
+    w_t, h_t = tabla.wrap(width - 100, height)
+    tabla.drawOn(p, 50, height - 120 - h_t)
+
     p.showPage()
     p.save()
     return response
@@ -230,27 +234,26 @@ def generar_excel_usuarios(request):
         paginator = Paginator(usuarios_list, 10)
         page_number = request.GET.get('page', 1)
         usuarios_reporte = paginator.get_page(page_number)
+        nombre_f = f"EasyTime_Pagina_{page_number}.xlsx"
     else:
         usuarios_reporte = User.objects.all().order_by('id')
+        nombre_f = "EasyTime_Usuarios_Completo.xlsx"
 
     wb = openpyxl.Workbook()
     ws = wb.active
-    ws.title = f"Reporte_{scope}"
+    ws.title = "Usuarios"
+    ws.append(['ID', 'Identificación', 'Nombre', 'Apellido', 'Email', 'Rol', 'Estado'])
 
-    headers = ['ID', 'Tipo Doc', 'Identificación', 'Nombre', 'Apellido', 'Email', 'Rol', 'Estado']
-    ws.append(headers)
+    # Estilo Encabezados
+    for cell in ws[1]:
+        cell.font = Font(bold=True, color="FFFFFF")
+        cell.fill = PatternFill(start_color="0D6EFD", end_color="0D6EFD", fill_type="solid")
 
-    for user in usuarios_reporte:
-        ws.append([
-            user.id,
-            getattr(user, 'tipo_documento', 'N/A'),
-            getattr(user, 'identificacion', 'N/A') or 'N/A', # ✅ Campo corregido
-            user.first_name, user.last_name, user.email,
-            str(getattr(user, 'rol', 'CLIENTE')),
-            "Activo" if user.is_active else "Inactivo"
-        ])
+    for u in usuarios_reporte:
+        doc = getattr(u, 'identificacion', 'N/A') or 'N/A'
+        ws.append([u.id, doc, u.first_name, u.last_name, u.email, getattr(u, 'rol', 'CLIENTE'), "Activo" if u.is_active else "Inactivo"])
 
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = f'attachment; filename="EasyTime_Data_{scope}.xlsx"'
+    response['Content-Disposition'] = f'attachment; filename="{nombre_f}"'
     wb.save(response)
     return response

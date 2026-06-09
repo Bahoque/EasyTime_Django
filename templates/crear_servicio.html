@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card border-0 shadow-sm rounded-4 bg-body-tertiary">
+                <div class="card-body p-4 p-sm-5">
+                    
+                    <div class="d-flex align-items-center mb-4">
+                        <a href="{% url 'home' %}" class="btn btn-link p-0 me-3 text-body">
+                            <i class="bi bi-arrow-left-circle-fill fs-2"></i>
+                        </a>
+                        <h3 class="card-title mb-0 fw-bold">Nuevo Servicio</h3>
+                    </div>
+                    
+                    <hr class="mb-4 opacity-25">
+
+                    <form method="post" enctype="multipart/form-data" novalidate>
+                        {% csrf_token %}
+                        
+                        {% for field in form %}
+                            <div class="mb-3">
+                                <label for="{{ field.id_for_label }}" class="form-label fw-semibold">
+                                    {{ field.label }}
+                                </label>
+                                {{ field }}
+                                
+                                {% if field.help_text %}
+                                    <div class="form-text small">{{ field.help_text }}</div>
+                                {% endif %}
+                                
+                                {% if field.errors %}
+                                    <div class="text-danger small mt-1 fw-bold">
+                                        <i class="bi bi-exclamation-triangle-fill me-1"></i>{{ field.errors|striptags }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary rounded-pill py-2 shadow-sm fw-bold">
+                                <i class="bi bi-plus-circle-fill me-2"></i> Registrar Servicio
+                            </button>
+                            <a href="{% url 'home' %}" class="btn btn-link text-decoration-none text-body-secondary">
+                                Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Aseguramos que los inputs se vean bien en modo oscuro sin necesidad de código complejo */
+    .form-control {
+        border-radius: 0.75rem !important;
+        padding: 0.6rem 1rem !important;
+    }
+</style>
+
+<script>
+    // Pequeño script para asegurar que los campos del form de Django tengan la clase form-control
+    document.addEventListener("DOMContentLoaded", function() {
+        document.querySelectorAll('input, select, textarea').forEach(function(field) {
+            field.classList.add('form-control');
+        });
+    });
+</script>
+{% endblock %}

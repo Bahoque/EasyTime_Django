@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard de Métricas{% endblock %}
+
+{% block content %}
+<div class="container mt-5 pb-5">
+    <div class="mb-4">
+        <h2 class="fw-bold text-body">Métricas de Control</h2>
+        <p class="text-muted">Monitoreo de rendimiento mensual: <span class="fw-bold text-primary">{{ mes_nombre }}</span></p>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 bg-body-tertiary h-100 p-4 border-start border-4 border-success">
+                <h6 class="text-uppercase text-muted small fw-bold">Servicio Más Solicitado</h6>
+                {% if servicio_top %}
+                    <h3 class="fw-bold text-body my-2">{{ servicio_top.servicio__nombre }}</h3>
+                    <small class="text-success">{{ servicio_top.total }} servicios agendados</small>
+                {% else %}
+                    <p class="text-muted mt-2">Sin datos este mes</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 bg-body-tertiary h-100 p-4 border-start border-4 border-primary">
+                <h6 class="text-uppercase text-muted small fw-bold">Producto Más Vendido</h6>
+                {% if producto_top %}
+                    <h3 class="fw-bold text-body my-2">{{ producto_top.producto__nombre }}</h3>
+                    <small class="text-primary">{{ producto_top.total_vendido }} unidades vendidas</small>
+                {% else %}
+                    <p class="text-muted mt-2">Sin datos este mes</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 bg-body-tertiary h-100 p-4 border-start border-4 border-warning">
+                <h6 class="text-uppercase text-muted small fw-bold">Horario de Mayor Flujo</h6>
+                {% if hora_pico %}
+                    <h3 class="fw-bold text-body my-2">{{ hora_pico }}</h3>
+                    <small class="text-warning">{{ total_citas_hora }} citas registradas</small>
+                {% else %}
+                    <p class="text-muted mt-2">Sin citas registradas</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm rounded-4 bg-body-tertiary p-4">
+                <h5 class="fw-bold mb-3">Distribución de Citas</h5>
+                <canvas id="graficaCitas"></canvas>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm rounded-4 bg-body-tertiary p-4">
+                <h5 class="fw-bold mb-3">Ventas por Producto</h5>
+                <canvas id="graficaProductos"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Configuración sencilla para las gráficas
+    const ctxCitas = document.getElementById('graficaCitas').getContext('2d');
+    new Chart(ctxCitas, {
+        type: 'doughnut',
+        data: {
+            labels: ['Pendientes', 'Confirmadas', 'Completadas'],
+            datasets: [{
+                data: [12, 19, 3], // Aquí debes pasar los datos desde Django
+                backgroundColor: ['#ffc107', '#3b82f6', '#28a745']
+            }]
+        }
+    });
+
+    const ctxProductos = document.getElementById('graficaProductos').getContext('2d');
+    new Chart(ctxProductos, {
+        type: 'bar',
+        data: {
+            labels: ['Prod 1', 'Prod 2', 'Prod 3'],
+            datasets: [{
+                label: 'Unidades Vendidas',
+                data: [10, 20, 15],
+                backgroundColor: '#3b82f6'
+            }]
+        }
+    });
+</script>
+{% endblock %}

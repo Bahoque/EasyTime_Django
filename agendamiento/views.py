@@ -1,11 +1,11 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from django.db import IntegrityError
 from django.http import JsonResponse
 from django.core.paginator import Paginator # Importante para el catálogo
 from .models import Cita, Servicio, Notificacion 
-from .forms import CitaForm
+from .forms import CitaForm, ServicioForm  # ✅ CORRECCIÓN: Se importó ServicioForm
 
 # ===================================================================
 # CATÁLOGO Y AGENDAMIENTO
@@ -158,3 +158,27 @@ def detalle_cita(request, cita_id):
 
     # Renderizamos tu nuevo template de diseño claro
     return render(request, 'detalle_cita.html', {'cita': cita})
+
+
+# ===================================================================
+# ➕ MÓDULO ADMINISTRATIVO DE SERVICIOS (AÑADIDO)
+# ===================================================================
+
+def es_administrador(user):
+    """Verifica si el usuario logueado pertenece al equipo administrativo"""
+    return user.is_authenticated and (user.is_staff or getattr(user, 'rol', None) in ['ADMIN',])
+
+@user_passes_test(es_administrador, login_url='login', redirect_field_name=None)
+def crear_servicio(request):
+    """Permite registrar un nuevo servicio desde la interfaz operativa sin usar Django Admin"""
+    if request.method == 'POST':
+        # Pasamos request.FILES de forma obligatoria para capturar la imagen adjunta
+        form = ServicioForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            messages.success(request, '¡El servicio operativo ha sido creado y guardado con éxito!')
+            return redirect('home')
+    else:
+        form = ServicioForm()
+        
+    return render(request, 'crear_servicio.html', {'form': form})

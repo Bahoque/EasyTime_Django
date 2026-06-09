@@ -67,8 +67,12 @@ WSGI_APPLICATION = 'easytime.wsgi.application'
 # Database
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'EasyTime',
+        'USER': 'postgres',
+        'PASSWORD': 'bahoque123',
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
 }
 

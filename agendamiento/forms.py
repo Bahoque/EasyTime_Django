@@ -52,3 +52,50 @@ class CitaForm(forms.ModelForm):
     def clean_placa_vehiculo(self):
         placa = self.cleaned_data.get('placa_vehiculo')
         return placa.upper() if placa else placa
+
+
+# =========================================================================
+# ➕ NUEVO FORMULARIO PARA LA CREACIÓN DE SERVICIOS (ADMINISTRATIVO)
+# =========================================================================
+class ServicioForm(forms.ModelForm):
+    # DurationField maneja perfectamente el tipo de dato 'interval' de la base de datos
+    duracion_estimada = forms.DurationField(
+        widget=forms.TextInput(attrs={
+            'class': 'form-control', 
+            'placeholder': '00:45:00 (HH:MM:SS)'
+        }),
+        label='Duración estimada',
+        help_text='Ingresa el tiempo estimado del servicio en formato de Horas:Minutos:Segundos.'
+    )
+
+    class Meta:
+        model = Servicio
+        # Mapeo exacto de columnas de tu base de datos postgres/sqlite
+        fields = ['nombre', 'descripcion', 'precio', 'duracion_estimada', 'imagen']
+        
+        labels = {
+            'nombre': 'Nombre del servicio',
+            'descripcion': 'Descripción del servicio',
+            'precio': 'Precio ($)',
+            'imagen': 'Imagen descriptiva',
+        }
+        
+        widgets = {
+            'nombre': forms.TextInput(attrs={
+                'class': 'form-control', 
+                'placeholder': 'Ej. Lavado General de Auto/Moto'
+            }),
+            'descripcion': forms.Textarea(attrs={
+                'class': 'form-control', 
+                'rows': 3, 
+                'placeholder': 'Detalla qué incluye este paquete premium...'
+            }),
+            'precio': forms.NumberInput(attrs={
+                'class': 'form-control', 
+                'step': '0.01', 
+                'placeholder': '0.00'
+            }),
+            'imagen': forms.ClearableFileInput(attrs={
+                'class': 'form-control'
+            }),
+        }

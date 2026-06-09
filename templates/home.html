@@ -3,13 +3,13 @@
 
 {% block content %}
 <div class="container mt-4">
-   <div class="container-fluid p-0 mb-5">
-<div class="position-relative shadow-sm rounded-4 overflow-hidden">
-<img src="{% static 'img/iniciolava.jpg' %}"
-alt="Banner Lavadero"
-style="width: 100%; height: auto; display: block; object-fit: cover;">
-</div>
-</div>
+    <div class="container-fluid p-0 mb-5">
+        <div class="position-relative shadow-sm rounded-4 overflow-hidden">
+            <img src="{% static 'img/iniciolava.jpg' %}"
+                 alt="Banner Lavadero"
+                 style="width: 100%; height: auto; display: block; object-fit: cover;">
+        </div>
+    </div>
 
     <div class="row g-4 text-center">
         <div class="col-md-4">
@@ -35,7 +35,7 @@ style="width: 100%; height: auto; display: block; object-fit: cover;">
                     </div>
                     <h3 class="card-title mt-2 fw-bold custom-text-bright">Tienda Online</h3>
                     <p class="card-text custom-text-dim">Accesorios y kits de limpieza para tu auto.</p>
-                    <a href="{% url 'catalogo_productos' %}" class="btn btn-success w-100 mt-auto rounded-pill fw-bold py-2">
+                    <a href="{% url 'catalogo_productos' %}" class="btn btn-primary w-100 mt-auto rounded-pill fw-bold py-2">
                         Ver Productos
                     </a>
                 </div>
@@ -51,65 +51,78 @@ style="width: 100%; height: auto; display: block; object-fit: cover;">
                     </div>
                     <h3 class="card-title mt-2 fw-bold custom-text-bright">Servicios</h3>
                     <p class="card-text custom-text-dim">Conoce nuestros paquetes de lavado y limpieza premium.</p>
+
                     <a href="{% url 'servicios' %}" class="btn btn-primary w-100 mt-auto rounded-pill fw-bold py-2">
                         Ver Servicios
                     </a>
+
+                    {% if user.is_superuser or user.rol == 'ADMIN' %}
+                    <a href="{% url 'agendamiento:crear_servicio' %}" class="btn btn-outline-secondary w-100 mt-2 rounded-pill fw-bold py-2" style="border-style: dashed;">
+                        <i class="bi bi-plus-circle me-1"></i> Añadir Nuevo Servicio
+                    </a>
+                    {% endif %}
                 </div>
             </div>
         </div>
 
-
-    
-         {% if user.rol == 'ADMIN' or user.is_superuser %} <!-- 05/04/2026 Solo visible para administradores -->
-         <div class="col-md-4">
+        {% if user.rol == 'ADMIN' or user.is_superuser %}
+        <div class="col-md-4">
             <div class="card h-100 border-0 shadow-sm p-3 bg-body-tertiary rounded-4">
                 <div class="card-body d-flex flex-column">
                     <div class="mb-3">
-                        <i class="bi bi-people-fill display-4"style="color: var(--yellow);"></i>
+                        <i class="bi bi-people-fill display-4" style="color: var(--yellow);"></i>
                     </div>
                     <h3 class="card-title mt-2 fw-bold custom-text-bright">Gestión de Usuarios</h3>
                     <p class="card-text custom-text-dim">Administra los usuarios del sistema.</p>
-                   
                     <a href="{% url 'lista_usuarios' %}" class="btn btn-warning w-100 mt-auto rounded-pill fw-bold py-2">
                        Ver Usuarios
-                   </a>
+                    </a>
                 </div>
             </div>
-        </div> 
+        </div>
         {% endif %}
 
         {% if user.rol == 'ADMIN' or user.rol == 'JEFE' or user.is_superuser %}
         <div class="col-md-4">
             <div class="card h-100 border-0 shadow-sm p-3 bg-body-tertiary rounded-4">
                 <div class="card-body d-flex flex-column">
-                <div class="mb-3 text-center">
-                    <i class="bi bi-calendar-event-fill display-4" style="color: var(--yellow);"></i>
+                    <div class="mb-3 text-center">
+                        <i class="bi bi-calendar-event-fill display-4" style="color: var(--yellow);"></i>
+                    </div>
+                    <h3 class="card-title mt-2 fw-bold custom-text-bright text-center">Gestión de Citas</h3>
+                    <p class="card-text custom-text-dim text-center">Agenda y estados de los servicios.</p>
+                    <a href="{% url 'gestion_citas' %}" class="btn btn-warning w-100 mt-auto rounded-pill fw-bold py-2">
+                        Ver listado completo
+                    </a>
                 </div>
-                <h3 class="card-title mt-2 fw-bold custom-text-bright text-center">Gestión de Citas</h3>
-                <p class="card-text custom-text-dim text-center">Agenda y estados de los servicios.</p>
-            
-                <a href="{% url 'gestion_citas' %}" class="btn btn-warning w-100 mt-auto rounded-pill fw-bold py-2">
-                    Ver listado completo
-                </a>
+            </div>
         </div>
-    </div>
-</div> 
-{% endif %}
+        {% endif %}
     </div>
 </div>
 
 <style>
-    /* Colores Adaptables (Definidos en base.html, pero reforzados aquí) */
-    [data-bs-theme="dark"] .custom-text-bright { color: #E2E8F0; }
-    [data-bs-theme="dark"] .custom-text-dim { color: #94A3B8; }
-    [data-bs-theme="light"] .custom-text-bright { color: #212529; }
-    [data-bs-theme="light"] .custom-text-dim { color: #6c757d; }
+    [data-bs-theme="dark"] .custom-text-bright {
+        color: #E2E8F0;
+    }
+
+    [data-bs-theme="dark"] .custom-text-dim {
+        color: #94A3B8;
+    }
+
+    [data-bs-theme="light"] .custom-text-bright {
+        color: #212529;
+    }
+
+    [data-bs-theme="light"] .custom-text-dim {
+        color: #6c757d;
+    }
 
     .card {
         transition: transform 0.3s ease, box-shadow 0.3s ease;
         border: 1px solid transparent !important;
     }
-    
+
     [data-bs-theme="dark"] .card {
         border: 1px solid #334155 !important;
     }
@@ -119,25 +132,9 @@ style="width: 100%; height: auto; display: block; object-fit: cover;">
         box-shadow: 0 12px 24px rgba(0,0,0,0.15) !important;
     }
 
-    /* Estilo para el botón de servicios */
     .btn-primary {
         background-color: var(--blue) !important;
         border-color: var(--blue) !important;
-    }
-
-    .btn-success {
-        background-color: var(--blue) !important;
-        border-color: var(--blue) !important;
-    }
-
-    .btn-info {
-        background-color: var(--blue) !important;
-        border-color: var(--blue) !important;
-    }
-    
-    .btn-info:hover {
-        background-color: var(--blue) !important;
-        border-color: #0baccc !important;
     }
 </style>
 {% endblock %}

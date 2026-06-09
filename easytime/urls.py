@@ -17,8 +17,8 @@ urlpatterns = [
     path('', views.home, name='home'),
     path('gestion-citas/', views.gestion_citas, name='gestion_citas'),
     
-
-    # path('dashboard/', views.dashboard_admin, name='dashboard'), 
+    # 🔹 NUEVO: Dashboard de Métricas exclusivo para Superusuario (Descomentado y Activo)
+    path('dashboard/', views.dashboard_admin, name='dashboard'), 
     
     # Usuarios y Autenticación (Generales)
     path('accounts/', include('django.contrib.auth.urls')),

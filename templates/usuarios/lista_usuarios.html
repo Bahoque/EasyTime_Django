@@ -2,12 +2,12 @@
 {% load static %}
 
 {% block content %}
-<div class="container mt-5">
-    <!-- CABECERA -->
+<div class="container mt-5 text-body">
+    
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h2 class="fw-bold text-dark">Gestión de Usuarios</h2>
-            <p class="text-muted">Administra las cuentas, roles e identificaciones de EasyTime</p>
+            <h2 class="fw-bold text-body-emphasis">Gestión de Usuarios</h2>
+            <p class="text-secondary">Administra las cuentas, roles e identificaciones de EasyTime</p>
         </div>
         <div>
             <a href="{% url 'crear_usuario' %}" class="btn btn-primary rounded-pill px-4 shadow-sm fw-bold">
@@ -16,29 +16,28 @@
         </div>
     </div>
 
-    <!-- BARRA DE ACCIONES (PDF) -->
-    <div class="card border-0 shadow-sm mb-4 rounded-4 bg-light">
+    <div class="card border-0 shadow-sm mb-4 rounded-4 bg-body-tertiary">
         <div class="card-body d-flex gap-2">
             <div class="dropdown">
-                <button class="btn btn-danger dropdown-toggle rounded-pill px-3 shadow-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <button class="btn btn-outline-danger dropdown-toggle rounded-pill px-3 shadow-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                     <i class="bi bi-file-earmark-pdf-fill me-1"></i> Exportar PDF
                 </button>
                 <ul class="dropdown-menu shadow border-0">
                     <li>
                         <a class="dropdown-item" href="{% url 'generar_pdf_usuarios' %}?scope=pagina&page={{ usuarios.number }}">
-                            <i class="bi bi-file-earmark-text me-2"></i>Solo esta página ({{ usuarios.object_list|length }})
+                            <i class="bi bi-file-earmark-text me-2"></i>Solo esta página
                         </a>
                     </li>
                     <li>
-                        <a class="dropdown-item text-danger fw-bold" href="{% url 'generar_pdf_usuarios' %}?scope=todo">
+                        <a class="dropdown-item text-danger" href="{% url 'generar_pdf_usuarios' %}?scope=todo">
                             <i class="bi bi-database-fill-down me-2"></i>Todo el sistema
                         </a>
                     </li>
-
-                    <!-- BARRA DE EXCEL -->
-                <li class="dropdown-header">Hoja de Cálculo</li>
-                    <li><a class="dropdown-item" href="{% url 'generar_excel_usuarios' %}">
-                        <i class="bi bi-file-earmark-excel-fill me-2 text-success"></i>Descargar Excel (.xlsx)
+                    <li><hr class="dropdown-divider"></li>
+                    <li class="dropdown-header">Hoja de Cálculo</li>
+                    <li>
+                        <a class="dropdown-item" href="{% url 'generar_excel_usuarios' %}">
+                            <i class="bi bi-file-earmark-excel-fill me-2 text-success"></i>Descargar Excel (.xlsx)
                         </a>
                     </li>
                 </ul>
@@ -46,31 +45,23 @@
         </div>
     </div>
 
-    <!-- Barra de Búsqueda -->
-<div class="row mb-4">
-    <div class="col-md-6">
-        <form method="GET" action="{% url 'lista_usuarios' %}" class="d-flex shadow-sm rounded-pill overflow-hidden">
-            <input type="text" name="search" class="form-control border-0 px-4" 
-                   placeholder="Buscar" 
-                   value="{{ request.GET.search }}">
-            <button class="btn btn-primary px-4 border-0" type="submit" style="background-color: var(--blue) !important;">
-                <i class="bi bi-search"></i>
-            </button>
-        </form>
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <form method="GET" action="{% url 'lista_usuarios' %}" class="d-flex shadow-sm rounded-pill overflow-hidden">
+                <input type="text" name="search" class="form-control border-0 px-4" 
+                       placeholder="Buscar" 
+                       value="{{ request.GET.search }}">
+                <button class="btn btn-primary px-4 border-0" type="submit">
+                    <i class="bi bi-search"></i>
+                </button>
+            </form>
+        </div>
     </div>
-    <div class="col-md-6 text-end">
-        {% if request.GET.search %}
-            <a href="{% url 'lista_usuarios' %}" class="btn btn-link text-muted small">Limpiar búsqueda</a>
-        {% endif %}
-    </div>
-</div>
 
-
-    <!-- TABLA DE USUARIOS (Diseño Moderno) -->
     <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0 bg-white">
-                <thead class="bg-dark text-white">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
                     <tr>
                         <th class="ps-4 py-3">Usuario / Correo</th>
                         <th>Identificación</th>
@@ -85,32 +76,28 @@
                     <tr>
                         <td class="ps-4">
                             <div class="d-flex align-items-center">
-                                <div class="avatar-sm me-3 bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 40px; height: 40px; background-color: var(--blue) !important;">
+                                <div class="avatar-sm me-3 bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 40px; height: 40px;">
                                     {{ usuario.username|slice:":1"|upper }}
                                 </div>
                                 <div>
-                                    <div class="fw-bold text-dark">{{ usuario.get_full_name|default:usuario.username }}</div>
-                                    <div class="small text-muted">{{ usuario.email }}</div>
+                                    <div class="fw-bold text-body-emphasis">{{ usuario.get_full_name|default:usuario.username }}</div>
+                                    <div class="small text-secondary">{{ usuario.email }}</div>
                                 </div>
                             </div>
                         </td>
                         <td>
-                            <span class="badge bg-light text-dark border">
-                                {{ usuario.get_tipo_documento_display|default:"CC" }}: {{ usuario.identificacion|default:"N/A" }}
-                            </span>
+                            <span class="text-body">{{ usuario.get_tipo_documento_display|default:"CC" }}: {{ usuario.identificacion|default:"N/A" }}</span>
                         </td>
                         <td>
-                            <span class="small text-muted">
-                                <i class="bi bi-telephone me-1"></i>{{ usuario.telefono|default:"-" }}
-                            </span>
+                            <span class="text-secondary">{{ usuario.telefono|default:"-" }}</span>
                         </td>
                         <td>
                             {% if usuario.rol == 'ADMIN' %}
-                                <span class="badge bg-info text-dark">Administrador</span>
+                                <span class="badge bg-info-subtle text-info">Administrador</span>
                             {% elif usuario.rol == 'JEFE' %}
-                                <span class="badge bg-warning text-dark">Jefe de Patio</span>
+                                <span class="badge bg-warning-subtle text-warning">Jefe de Patio</span>
                             {% else %}
-                                <span class="badge bg-secondary">Cliente</span>
+                                <span class="badge bg-secondary-subtle text-body">Cliente</span>
                             {% endif %}
                         </td>
                         <td>
@@ -121,49 +108,16 @@
                             {% endif %}
                         </td>
                         <td class="text-center">
-                            <div class="btn-group" role="group">
-                                <a href="{% url 'editar_usuario' usuario.pk %}" class="btn btn-sm btn-outline-primary" title="Editar">
-                                    <i class="bi bi-pencil-square"></i>
-                                </a>
-                                <a href="{% url 'eliminar_usuario' usuario.pk %}" class="btn btn-sm btn-outline-danger" title="Eliminar">
-                                    <i class="bi bi-trash"></i>
-                                </a>
+                            <div class="btn-group">
+                                <a href="{% url 'editar_usuario' usuario.pk %}" class="btn btn-sm btn-outline-primary" title="Editar"><i class="bi bi-pencil-square"></i></a>
+                                <a href="{% url 'eliminar_usuario' usuario.pk %}" class="btn btn-sm btn-outline-danger" title="Eliminar"><i class="bi bi-trash"></i></a>
                             </div>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="6" class="text-center text-muted py-5">
-                            <i class="bi bi-people fa-3x mb-3 d-block"></i>
-                            No hay usuarios registrados en el sistema.
                         </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
-                    <div class="text-center mt-5 mb-4">
-                        <a href="{% url 'home' %}" class="btn btn-outline-secondary rounded-pill px-4 shadow-sm">
-                            <i class="bi bi-arrow-left me-2"></i>Volver al Inicio
-                        </a>
-                    </div>
         </div>
     </div>
-
-    <!-- PAGINACIÓN -->
-    {% if usuarios.has_other_pages %}
-    <nav class="mt-4">
-        <ul class="pagination justify-content-center">
-            {% if usuarios.has_previous %}
-                <li class="page-item"><a class="page-link" href="?page={{ usuarios.previous_page_number }}">Anterior</a></li>
-            {% endif %}
-            
-            <li class="page-item active"><span class="page-link">{{ usuarios.number }}</span></li>
-
-            {% if usuarios.has_next %}
-                <li class="page-item"><a class="page-link" href="?page={{ usuarios.next_page_number }}">Siguiente</a></li>
-            {% endif %}
-        </ul>
-    </nav>
-    {% endif %}
 </div>
 {% endblock %}

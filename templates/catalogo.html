@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load humanize %}
+{% load cloudinary %}
 
 {% block content %}
 
@@ -13,9 +14,7 @@
                 
                 {% if producto.imagen %}
                     <div style="height: 250px; display: flex; align-items: center; justify-content: center;" class="p-3 bg-white">
-                        <img src="{{ producto.imagen }}" 
-                             alt="{{ producto.nombre }}" 
-                             style="max-height: 100%; max-width: 100%; object-fit: contain;">
+                        {% cloudinary producto.imagen alt=producto.nombre style="max-height: 100%; max-width: 100%; object-fit: contain;" %}
                     </div>
                 {% else %}
                     <div class="bg-secondary-subtle text-muted d-flex align-items-center justify-content-center" style="height: 250px;">

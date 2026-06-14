@@ -13,7 +13,7 @@
                 
                 {% if producto.imagen %}
                     <div style="height: 250px; display: flex; align-items: center; justify-content: center;" class="p-3 bg-white">
-                        <img src="{{ producto.imagen.url }}" 
+                        <img src="{{ producto.imagen }}" 
                              alt="{{ producto.nombre }}" 
                              style="max-height: 100%; max-width: 100%; object-fit: contain;">
                     </div>
@@ -96,15 +96,14 @@
 <br><br><br>
 
 <div class="text-center mt-5 mb-4">
-        <hr class="text-muted opacity-25"> <!-- Linea divisoria-->
-        <a href="{% url 'home' %}" class="btn btn-outline-secondary rounded-pill px-4 shadow-sm">
-            <i class="bi bi-arrow-left me-2"></i>Volver al Inicio
-        </a>
-    </div>
+    <hr class="text-muted opacity-25">
+    <a href="{% url 'home' %}" class="btn btn-outline-secondary rounded-pill px-4 shadow-sm">
+        <i class="bi bi-arrow-left me-2"></i>Volver al Inicio
+    </a>
+</div>
 </div>
 
 <style>
-    /* Control de descripción */
     .descripcion-texto {
         display: -webkit-box;
         -webkit-line-clamp: 2;
@@ -113,7 +112,6 @@
     }
     .descripcion-texto.expandida { -webkit-line-clamp: unset; display: block; }
 
-    /* Animación Stock Bajo */
     .animate-pulse { animation: pulse-yellow 2s infinite; }
     @keyframes pulse-yellow {
         0% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.4); }
@@ -121,14 +119,12 @@
         100% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0); }
     }
 
-    /* Tarjetas */
     .card { transition: transform 0.3s ease, box-shadow 0.3s ease; }
     .card:hover {
         transform: translateY(-8px);
         box-shadow: 0 12px 24px rgba(0,0,0,0.15) !important;
     }
 
-    /* Limpieza de inputs numéricos */
     input[type=number]::-webkit-inner-spin-button, 
     input[type=number]::-webkit-outer-spin-button { 
         -webkit-appearance: none; 
@@ -138,21 +134,18 @@
 </style>
 
 <script>
-    // Función para los botones de +/-
     function cambiarCantidad(btn, cambio) {
-    const input = btn.parentElement.querySelector('input[type="number"]');
-    let valorActual = parseInt(input.value);
-    const maxVal = parseInt(input.getAttribute('max'));
-    let nuevoValor = valorActual + cambio;
-    if (nuevoValor >= 1 && nuevoValor <= maxVal) {
-        input.value = nuevoValor;
-    } else if (nuevoValor > maxVal) {
-        // Mensaje por si pone más de lo que hay disponible
-        alert("Lo sentimos, solo quedan " + maxVal + " unidades disponibles.");
+        const input = btn.parentElement.querySelector('input[type="number"]');
+        let valorActual = parseInt(input.value);
+        const maxVal = parseInt(input.getAttribute('max'));
+        let nuevoValor = valorActual + cambio;
+        if (nuevoValor >= 1 && nuevoValor <= maxVal) {
+            input.value = nuevoValor;
+        } else if (nuevoValor > maxVal) {
+            alert("Lo sentimos, solo quedan " + maxVal + " unidades disponibles.");
+        }
     }
-}
 
-    // Lógica de "Leer más"
     document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.btn-leer-mas').forEach(boton => {
             boton.addEventListener('click', function() {

@@ -14,7 +14,7 @@
         <div class="col-md-4">
             <div class="card h-100 shadow-sm border-0 rounded-4 overflow-hidden bg-body-tertiary">
                 {% if servicio.imagen %}
-                    <img src="{{ servicio.imagen.url }}" class="card-img-top" alt="{{ servicio.nombre }}" style="height: 200px; object-fit: cover;">
+                    <img src="{{ servicio.imagen }}" class="card-img-top" alt="{{ servicio.nombre }}" style="height: 200px; object-fit: cover;">
                 {% else %}
                     <div class="bg-secondary-subtle d-flex align-items-center justify-content-center" style="height: 200px;">
                         <i class="bi bi-droplet-half text-secondary opacity-50" style="font-size: 3rem;"></i>
@@ -91,7 +91,6 @@
 </div>
 
 <style>
-    /* Estilos de Paginación */
     .page-link {
         color: #0d6efd;
         padding: 0.5rem 1rem;
@@ -109,13 +108,11 @@
         color: #cbd5e1;
     }
 
-    /* Variables de Texto Adaptables */
     [data-bs-theme="dark"] .custom-text-bright { color: #F8FAFC; }
     [data-bs-theme="dark"] .custom-text-dim { color: #94A3B8; }
     [data-bs-theme="light"] .custom-text-bright { color: #1E293B; }
     [data-bs-theme="light"] .custom-text-dim { color: #64748B; }
 
-    /* Efectos de la Tarjeta */
     .card { 
         transition: transform 0.3s ease, box-shadow 0.3s ease; 
         border: 1px solid transparent !important;

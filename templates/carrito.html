@@ -35,7 +35,7 @@
                                     {% if item.producto.imagen %}
                                         <div class="rounded-3 border bg-white d-flex align-items-center justify-content-center p-1" 
                                              style="width: 60px; height: 60px;">
-                                            <img src="{{ item.producto.imagen.url }}" alt="{{ item.producto.nombre }}" 
+                                            <img src="{{ item.producto.imagen }}" alt="{{ item.producto.nombre }}" 
                                                  style="max-height: 100%; max-width: 100%; object-fit: contain;">
                                         </div>
                                     {% else %}
@@ -121,9 +121,7 @@
 
             checkboxes.forEach(cb => {
                 if (cb.checked && !cb.disabled) {
-                    // Se usa parseFloat directamente sobre el valor numérico de floatformat
                     let valorNum = parseFloat(cb.dataset.subtotal);
-                    
                     if (!isNaN(valorNum)) {
                         nuevoTotal += valorNum;
                         algunoSeleccionado = true;
@@ -148,7 +146,6 @@
 </script>
 
 <style>
-    /* VARIABLES DE COLOR ADAPTABLES */
     [data-bs-theme="dark"] .custom-text-bright { color: #E2E8F0; }
     [data-bs-theme="dark"] .custom-text-dim { color: #94A3B8; }
 </style>

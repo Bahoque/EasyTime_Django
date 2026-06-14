@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from cloudinary.models import CloudinaryField
 
 class Proveedor(models.Model):
     nombre = models.CharField(max_length=100)
@@ -13,7 +14,7 @@ class Producto(models.Model):
     descripcion = models.TextField(blank=True)
     precio_venta = models.DecimalField(max_digits=10, decimal_places=2)
     stock_actual = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    imagen = models.ImageField(upload_to='productos/', null=True, blank=True)
+    imagen = CloudinaryField('imagen', null=True, blank=True)
 
     def __str__(self):
         return f"{self.nombre} (${self.precio_venta})"
@@ -36,7 +37,7 @@ class DetalleEntrada(models.Model):
 class Venta(models.Model):
     cliente = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     fecha_venta = models.DateTimeField(auto_now_add=True)
-    total = models.DecimalField(max_digits=12, decimal_places=2, default=0) # Campo original de la BD
+    total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     pagado = models.BooleanField(default=False)
 
     @property

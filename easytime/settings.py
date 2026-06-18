@@ -60,14 +60,33 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'easytime.wsgi.application'
 
-DATABASES = {
+"""DATABASES = {
     'default': dj_database_url.config(
         default=os.environ.get('DATABASE_URL'),
         conn_max_age=600
     )
+}"""
+
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'easytime_prueba' ,
+        'USER' : 'postgres',
+        'PASSWORD' : '12345',
+        'HOST' : 'localhost',
+        'PORT' : '5432',
+        
+
+    }
+    
 }
 
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 8929ad4344bc186c416acb5ccf26c3d808cb4a69
 AUTH_PASSWORD_VALIDATORS = []
 
 LANGUAGE_CODE = 'es-co'

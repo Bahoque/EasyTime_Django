@@ -9,32 +9,20 @@ from django.http import HttpResponse
 from django.db.models import Count
 from django.utils import timezone
 
-# Formularios y Modelos
 from .forms import RegistroClienteForm, EditarPerfilForm, UsuarioCreationForm, UsuarioUpdateForm
 from .models import User
 from agendamiento.models import Cita, Servicio 
 
-# Generación de Reportes
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
 from reportlab.platypus import Table, TableStyle
 import openpyxl
 from openpyxl.styles import Font, Alignment, PatternFill
-# Barra busqueda avanzada
 from django.db.models import Q
 
-# ===================================================================
-# PERMISOS Y UTILIDADES
-# ===================================================================
-
 def es_admin(user):
-    """Verifica si el usuario tiene rol administrativo"""
     return user.is_authenticated and (getattr(user, 'rol', None) in ['ADMIN', 'JEFE'] or user.is_superuser)
-
-# ===================================================================
-# VISTA DINÁMICA: HOME / DASHBOARD
-# ===================================================================
 
 def home(request):
     if es_admin(request.user):
@@ -42,10 +30,8 @@ def home(request):
         total_citas = Cita.objects.count()
         hoy = timezone.now().date()
         citas_hoy = Cita.objects.filter(fecha_hora__date=hoy).count()
-        
         citas_gestion = Cita.objects.all().order_by('-fecha_hora')
         ultimos_usuarios = User.objects.all().order_by('-id')[:5]
-
         context = {
             'total_usuarios': total_usuarios,
             'total_citas': total_citas,
@@ -55,12 +41,7 @@ def home(request):
             'es_admin_dashboard': True  
         }
         return render(request, 'home.html', context)
-    
     return render(request, 'home.html')
-
-# ===================================================================
-# GESTIÓN DE SESIÓN Y PERFIL
-# ===================================================================
 
 def custom_logout(request):
     logout(request)
@@ -84,16 +65,18 @@ def mi_perfil(request):
     if request.method == 'POST':
         form = EditarPerfilForm(request.POST, instance=request.user)
         if form.is_valid():
-            form.save()
+            user = form.save()
+            password_nueva = form.cleaned_data.get('password_nueva')
+            if password_nueva:
+                login(request, user)
             messages.success(request, "Perfil actualizado correctamente.")
             return redirect('mi_perfil')
+        else:
+            for error in form.errors.values():
+                messages.error(request, error)
     else:
         form = EditarPerfilForm(instance=request.user)
     return render(request, 'registration/perfil.html', {'form': form})
-
-# ===================================================================
-# ADMINISTRACIÓN DE USUARIOS (CRUD)
-# ===================================================================
 
 @login_required
 @user_passes_test(es_admin, login_url='home')
@@ -110,7 +93,7 @@ def lista_usuarios(request):
             Q(telefono__icontains=busqueda) |
             Q(rol__icontains=busqueda)
         ).distinct()
-    paginator = Paginator(usuarios_list, 10) 
+    paginator = Paginator(usuarios_list, 15)
     page_number = request.GET.get('page')
     usuarios = paginator.get_page(page_number)
     return render(request, 'usuarios/lista_usuarios.html', {
@@ -150,23 +133,20 @@ def editar_usuario(request, pk):
 def eliminar_usuario(request, pk):
     usuario = get_object_or_404(User, pk=pk)
     if request.method == 'POST':
-        usuario.delete()
-        messages.success(request, 'Usuario eliminado definitivamente.')
+        usuario.is_active = not usuario.is_active
+        usuario.save()
+        estado = "activado" if usuario.is_active else "inhabilitado"
+        messages.success(request, f'Usuario {usuario.username} {estado} correctamente.')
         return redirect('lista_usuarios')
     return render(request, 'usuarios/confirmar_eliminacion.html', {'usuario': usuario})
-
-# ===================================================================
-# EXPORTACIÓN DE REPORTES
-# ===================================================================
 
 @login_required
 @user_passes_test(es_admin, login_url='home')
 def generar_pdf_usuarios(request):
     scope = request.GET.get('scope', 'todo')
-    
     if scope == 'pagina':
         usuarios_list = User.objects.all().order_by('id')
-        paginator = Paginator(usuarios_list, 10)
+        paginator = Paginator(usuarios_list, 15)
         page_number = request.GET.get('page', 1)
         usuarios_reporte = paginator.get_page(page_number)
         subtitulo = f"Vista de Página {page_number}"
@@ -180,7 +160,6 @@ def generar_pdf_usuarios(request):
     p = canvas.Canvas(response, pagesize=letter)
     width, height = letter
 
-    # Encabezado y Logo
     logo_path = os.path.join(settings.BASE_DIR, 'static', 'img', 'favicon.ico')
     if os.path.exists(logo_path):
         p.drawImage(logo_path, 50, height - 75, width=40, height=40, mask='auto')
@@ -192,14 +171,13 @@ def generar_pdf_usuarios(request):
     p.setFillColor(colors.grey)
     p.drawString(100, height - 70, f"{subtitulo} | Generado por: {request.user.username}")
 
-    # Tabla de datos
     headers = [['ID', 'Identificación', 'Nombre', 'Rol', 'Estado']]
     data = headers
     for user in usuarios_reporte:
         doc = getattr(user, 'identificacion', 'N/A') or 'N/A'
         nombre = f"{user.first_name} {user.last_name}" if user.first_name else user.username
         rol = getattr(user, 'rol', 'CLIENTE')
-        estado = "Activo" if user.is_active else "Inactivo"
+        estado = "Activo" if user.is_active else "Inhabilitado"
         data.append([user.id, doc, nombre, rol, estado])
 
     tabla = Table(data, colWidths=[40, 100, 180, 80, 80])
@@ -210,8 +188,6 @@ def generar_pdf_usuarios(request):
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
         ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
     ])
-    
-    # Filas alternas (Cebreado) corregido
     for i in range(1, len(data)):
         if i % 2 == 0:
             style.add('BACKGROUND', (0, i), (-1, i), colors.whitesmoke)
@@ -219,7 +195,6 @@ def generar_pdf_usuarios(request):
     tabla.setStyle(style)
     w_t, h_t = tabla.wrap(width - 100, height)
     tabla.drawOn(p, 50, height - 120 - h_t)
-
     p.showPage()
     p.save()
     return response
@@ -228,10 +203,9 @@ def generar_pdf_usuarios(request):
 @user_passes_test(es_admin, login_url='home')
 def generar_excel_usuarios(request):
     scope = request.GET.get('scope', 'todo')
-    
     if scope == 'pagina':
         usuarios_list = User.objects.all().order_by('id')
-        paginator = Paginator(usuarios_list, 10)
+        paginator = Paginator(usuarios_list, 15)
         page_number = request.GET.get('page', 1)
         usuarios_reporte = paginator.get_page(page_number)
         nombre_f = f"EasyTime_Pagina_{page_number}.xlsx"
@@ -244,14 +218,13 @@ def generar_excel_usuarios(request):
     ws.title = "Usuarios"
     ws.append(['ID', 'Identificación', 'Nombre', 'Apellido', 'Email', 'Rol', 'Estado'])
 
-    # Estilo Encabezados
     for cell in ws[1]:
         cell.font = Font(bold=True, color="FFFFFF")
         cell.fill = PatternFill(start_color="0D6EFD", end_color="0D6EFD", fill_type="solid")
 
     for u in usuarios_reporte:
         doc = getattr(u, 'identificacion', 'N/A') or 'N/A'
-        ws.append([u.id, doc, u.first_name, u.last_name, u.email, getattr(u, 'rol', 'CLIENTE'), "Activo" if u.is_active else "Inactivo"])
+        ws.append([u.id, doc, u.first_name, u.last_name, u.email, getattr(u, 'rol', 'CLIENTE'), "Activo" if u.is_active else "Inhabilitado"])
 
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     response['Content-Disposition'] = f'attachment; filename="{nombre_f}"'

@@ -6,22 +6,18 @@ from django.core.exceptions import ValidationError
 class CitaForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(CitaForm, self).__init__(*args, **kwargs)
-        
-        # ✅ AGREGA ESTA LÍNEA:
-        self.fields['servicio'].queryset = Servicio.objects.all()
-        
+        self.fields['servicio'].queryset = Servicio.objects.filter(activo=True)
         self.fields['servicio'].label_from_instance = lambda obj: f"{obj.nombre}"
+        self.fields['fecha_hora'].widget.attrs['min'] = timezone.localtime(timezone.now()).strftime('%Y-%m-%dT%H:%M')
 
     class Meta:
         model = Cita
         fields = ['servicio', 'fecha_hora', 'placa_vehiculo', 'notas']
-        
         widgets = {
             'fecha_hora': forms.DateTimeInput(
                 attrs={
                     'type': 'datetime-local', 
                     'class': 'form-control',
-                    'min': timezone.now().strftime('%Y-%m-%dT%H:%M')
                 }
             ),
             'servicio': forms.Select(attrs={'class': 'form-select'}),
@@ -36,7 +32,6 @@ class CitaForm(forms.ModelForm):
                 attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Detalles adicionales...'}
             ),
         }
-        
         labels = {
             'fecha_hora': 'Fecha y Hora de la Cita',
             'placa_vehiculo': 'Placa del Vehículo',
@@ -54,32 +49,26 @@ class CitaForm(forms.ModelForm):
         return placa.upper() if placa else placa
 
 
-# =========================================================================
-# ➕ NUEVO FORMULARIO PARA LA CREACIÓN DE SERVICIOS (ADMINISTRATIVO)
-# =========================================================================
 class ServicioForm(forms.ModelForm):
-    # DurationField maneja perfectamente el tipo de dato 'interval' de la base de datos
     duracion_estimada = forms.DurationField(
         widget=forms.TextInput(attrs={
             'class': 'form-control', 
             'placeholder': '00:45:00 (HH:MM:SS)'
         }),
         label='Duración estimada',
-        help_text='Ingresa el tiempo estimado del servicio en formato de Horas:Minutos:Segundos.'
+        help_text='Ingresa el tiempo estimado en formato Horas:Minutos:Segundos.'
     )
 
     class Meta:
         model = Servicio
-        # Mapeo exacto de columnas de tu base de datos postgres/sqlite
-        fields = ['nombre', 'descripcion', 'precio', 'duracion_estimada', 'imagen']
-        
+        fields = ['nombre', 'descripcion', 'precio', 'duracion_estimada', 'imagen', 'activo']
         labels = {
             'nombre': 'Nombre del servicio',
             'descripcion': 'Descripción del servicio',
             'precio': 'Precio ($)',
             'imagen': 'Imagen descriptiva',
+            'activo': 'Servicio activo',
         }
-        
         widgets = {
             'nombre': forms.TextInput(attrs={
                 'class': 'form-control', 
@@ -88,7 +77,7 @@ class ServicioForm(forms.ModelForm):
             'descripcion': forms.Textarea(attrs={
                 'class': 'form-control', 
                 'rows': 3, 
-                'placeholder': 'Detalla qué incluye este paquete premium...'
+                'placeholder': 'Detalla qué incluye este paquete...'
             }),
             'precio': forms.NumberInput(attrs={
                 'class': 'form-control', 
@@ -97,5 +86,8 @@ class ServicioForm(forms.ModelForm):
             }),
             'imagen': forms.ClearableFileInput(attrs={
                 'class': 'form-control'
+            }),
+            'activo': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
             }),
         }

@@ -15,6 +15,7 @@ class Producto(models.Model):
     precio_venta = models.DecimalField(max_digits=10, decimal_places=2)
     stock_actual = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     imagen = CloudinaryField('imagen', null=True, blank=True)
+    activo = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.nombre} (${self.precio_venta})"

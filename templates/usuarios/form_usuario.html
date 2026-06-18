@@ -3,111 +3,107 @@
 {% block titulo %}{{ titulo }}{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
+<div class="container mt-5 pb-5">
     <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0"><i class="fas fa-user-edit"></i> {{ titulo }}</h4>
+        <div class="col-md-9">
+            <div class="card border-0 shadow-sm rounded-4 bg-body-tertiary">
+                <div class="card-header bg-primary text-white rounded-top-4 py-3 px-4">
+                    <h4 class="mb-0 fw-bold"><i class="bi bi-person-gear me-2"></i>{{ titulo }}</h4>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-4">
                     <form method="post">
                         {% csrf_token %}
                         
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Nombre de usuario *</label>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small text-secondary">Usuario</label>
                                 {{ form.username }}
                                 {% if form.username.errors %}
                                     <div class="text-danger small">{{ form.username.errors }}</div>
                                 {% endif %}
                             </div>
                             
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Correo electrónico *</label>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small text-secondary">Correo</label>
                                 {{ form.email }}
                                 {% if form.email.errors %}
                                     <div class="text-danger small">{{ form.email.errors }}</div>
                                 {% endif %}
                             </div>
-                        </div>
 
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Nombres *</label>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small text-secondary">Nombres</label>
                                 {{ form.first_name }}
                                 {% if form.first_name.errors %}
                                     <div class="text-danger small">{{ form.first_name.errors }}</div>
                                 {% endif %}
                             </div>
                             
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Apellidos *</label>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small text-secondary">Apellidos</label>
                                 {{ form.last_name }}
                                 {% if form.last_name.errors %}
                                     <div class="text-danger small">{{ form.last_name.errors }}</div>
                                 {% endif %}
                             </div>
-                        </div>
 
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label">Tipo de documento *</label>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold small text-secondary">Tipo de documento</label>
                                 {{ form.tipo_documento }}
                                 {% if form.tipo_documento.errors %}
                                     <div class="text-danger small">{{ form.tipo_documento.errors }}</div>
                                 {% endif %}
                             </div>
                             
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label">Número de documento / Identificación *</label>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold small text-secondary">Identificación</label>
                                 {{ form.identificacion }}
                                 {% if form.identificacion.errors %}
                                     <div class="text-danger small">{{ form.identificacion.errors }}</div>
                                 {% endif %}
                             </div>
 
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label">Teléfono</label>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold small text-secondary">Teléfono</label>
                                 {{ form.telefono }}
                                 {% if form.telefono.errors %}
                                     <div class="text-danger small">{{ form.telefono.errors }}</div>
                                 {% endif %}
                             </div>
-                        </div>
 
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Rol *</label>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold small text-secondary">Rol</label>
                                 {{ form.rol }}
                                 {% if form.rol.errors %}
                                     <div class="text-danger small">{{ form.rol.errors }}</div>
                                 {% endif %}
                             </div>
-                            
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Contraseña *</label>
-                                {{ form.password1 }}
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold small text-secondary">Contraseña</label>
+                                <input type="password" name="password1" class="form-control rounded-3" placeholder="Nueva contraseña">
                                 {% if form.password1.errors %}
                                     <div class="text-danger small">{{ form.password1.errors }}</div>
                                 {% endif %}
                             </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold small text-secondary">Confirmar contraseña</label>
+                                <input type="password" name="password2" class="form-control rounded-3" placeholder="Repite la contraseña">
+                                {% if form.password2.errors %}
+                                    <div class="text-danger small">{{ form.password2.errors }}</div>
+                                {% endif %}
+                            </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Confirmar contraseña *</label>
-                            {{ form.password2 }}
-                            {% if form.password2.errors %}
-                                <div class="text-danger small">{{ form.password2.errors }}</div>
-                            {% endif %}
-                        </div>
+                        <hr class="my-4 opacity-25">
 
-                        <div class="d-flex justify-content-between mt-4">
-                            <a href="{% url 'lista_usuarios' %}" class="btn btn-secondary">
-                                <i class="fas fa-arrow-left"></i> Volver
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'lista_usuarios' %}" class="btn btn-outline-secondary rounded-pill px-4">
+                                <i class="bi bi-arrow-left me-1"></i> Volver
                             </a>
-                            <button type="submit" class="btn btn-success">
-                                <i class="fas fa-save"></i> Guardar Usuario
+                            <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">
+                                <i class="bi bi-floppy me-1"></i> Guardar
                             </button>
                         </div>
                     </form>
@@ -116,4 +112,28 @@
         </div>
     </div>
 </div>
+
+<style>
+    input, select, textarea {
+        border-radius: 10px !important;
+        border: 1px solid #dee2e6 !important;
+        padding: 10px 14px !important;
+        font-size: 0.9rem;
+        transition: all 0.2s ease;
+    }
+
+    input:focus, select:focus {
+        border-color: #0d6efd !important;
+        box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.15) !important;
+        outline: none;
+    }
+
+    [data-bs-theme="dark"] input,
+    [data-bs-theme="dark"] select,
+    [data-bs-theme="dark"] textarea {
+        background-color: #1e293b !important;
+        color: #e2e8f0 !important;
+        border-color: #334155 !important;
+    }
+</style>
 {% endblock %}

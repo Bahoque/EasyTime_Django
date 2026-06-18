@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% load cloudinary %}
+
+{% block content %}
+<div class="container mt-5 pb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card border-0 shadow-sm rounded-4 bg-body-tertiary">
+                <div class="card-body p-4 p-sm-5">
+                    
+                    <div class="d-flex align-items-center mb-4">
+                        <a href="{% url 'catalogo_productos' %}" class="btn btn-link p-0 me-3 text-body">
+                            <i class="bi bi-arrow-left-circle-fill fs-2"></i>
+                        </a>
+                        <div>
+                            <h3 class="card-title mb-0 fw-bold">Editar Producto</h3>
+                            <small class="text-secondary">{{ producto.nombre }}</small>
+                        </div>
+                    </div>
+
+                    {% if producto.imagen %}
+                    <div class="mb-4 text-center">
+                        <p class="small text-secondary mb-2">Imagen actual:</p>
+                        {% cloudinary producto.imagen style="height: 150px; object-fit: cover; border-radius: 12px;" alt=producto.nombre %}
+                    </div>
+                    {% endif %}
+
+                    <hr class="mb-4 opacity-25">
+
+                    <form method="post" enctype="multipart/form-data" novalidate>
+                        {% csrf_token %}
+                        
+                        {% for field in form %}
+                            {% if field.name == 'activo' %}
+                                <div class="mb-4 p-3 rounded-3 border {% if producto.activo %}border-success bg-success bg-opacity-10{% else %}border-danger bg-danger bg-opacity-10{% endif %}">
+                                    <div class="form-check form-switch d-flex align-items-center gap-3">
+                                        {{ field }}
+                                        <label class="form-check-label fw-bold" for="{{ field.id_for_label }}">
+                                            {% if producto.activo %}
+                                                <span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>Producto Activo</span>
+                                            {% else %}
+                                                <span class="text-danger"><i class="bi bi-x-circle-fill me-1"></i>Producto Inhabilitado</span>
+                                            {% endif %}
+                                        </label>
+                                    </div>
+                                    <small class="text-secondary ms-1">Desactiva para ocultar este producto a los clientes.</small>
+                                </div>
+                            {% else %}
+                                <div class="mb-3">
+                                    <label for="{{ field.id_for_label }}" class="form-label fw-semibold">
+                                        {{ field.label }}
+                                    </label>
+                                    {{ field }}
+                                    {% if field.help_text %}
+                                        <div class="form-text small">{{ field.help_text }}</div>
+                                    {% endif %}
+                                    {% if field.errors %}
+                                        <div class="text-danger small mt-1 fw-bold">
+                                            <i class="bi bi-exclamation-triangle-fill me-1"></i>{{ field.errors|striptags }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary rounded-pill py-2 shadow-sm fw-bold">
+                                <i class="bi bi-floppy me-2"></i> Guardar Cambios
+                            </button>
+                            <a href="{% url 'catalogo_productos' %}" class="btn btn-link text-decoration-none text-body-secondary text-center">
+                                Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .form-control { border-radius: 0.75rem !important; padding: 0.6rem 1rem !important; }
+    .form-check-input { width: 3rem !important; height: 1.5rem !important; cursor: pointer; }
+</style>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        document.querySelectorAll('input:not([type="checkbox"]), select, textarea').forEach(function(field) {
+            field.classList.add('form-control');
+        });
+    });
+</script>
+{% endblock %}

@@ -5,12 +5,27 @@
 {% block content %}
 
 <div class="container mt-5">
-    <h2 class="fw-bold mb-4 text-center text-body">Productos</h2>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-body">Productos</h2>
+        {% if user.is_superuser or user.rol == 'ADMIN' %}
+        <a href="{% url 'crear_producto' %}" class="btn btn-outline-primary rounded-pill px-4 fw-bold shadow-sm" style="border-style: dashed;">
+            <i class="bi bi-plus-circle me-1"></i> Añadir Producto
+        </a>
+        {% endif %}
+    </div>
     
     <div class="row row-cols-1 row-cols-md-3 g-4">
         {% for producto in productos %}
         <div class="col">
-            <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden bg-body-tertiary">
+            <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden bg-body-tertiary position-relative">
+
+                {% if not producto.activo %}
+                <div class="position-absolute top-0 start-0 m-2" style="z-index: 10;">
+                    <span class="badge bg-danger rounded-pill px-3 py-2">
+                        <i class="bi bi-x-circle me-1"></i>Inhabilitado
+                    </span>
+                </div>
+                {% endif %}
                 
                 {% if producto.imagen %}
                     <div style="height: 250px; display: flex; align-items: center; justify-content: center;" class="p-3 bg-white">
@@ -56,7 +71,11 @@
                             </div>
                         </div>
 
-                        {% if producto.stock_actual > 0 %}
+                        {% if not producto.activo %}
+                            <button class="btn btn-secondary w-100 rounded-pill" disabled>
+                                <i class="bi bi-slash-circle me-1"></i>No disponible
+                            </button>
+                        {% elif producto.stock_actual > 0 %}
                             <form action="{% url 'agregar_carrito' producto.id %}" method="POST">
                                 {% csrf_token %}
                                 <div class="d-flex gap-2 align-items-center">
@@ -71,7 +90,6 @@
                                             <i class="bi bi-plus-lg"></i>
                                         </button>
                                     </div>
-
                                     <button type="submit" class="btn btn-primary flex-grow-1 rounded-pill shadow-sm fw-bold">
                                         <i class="bi bi-cart-plus me-1"></i> Añadir
                                     </button>
@@ -79,6 +97,12 @@
                             </form>
                         {% else %}
                             <button class="btn btn-secondary w-100 rounded-pill" disabled>Sin existencias</button>
+                        {% endif %}
+
+                        {% if user.is_superuser or user.rol == 'ADMIN' %}
+                        <a href="{% url 'editar_producto' producto.id %}" class="btn btn-outline-secondary w-100 rounded-pill fw-bold shadow-sm py-2 mt-2">
+                            <i class="bi bi-pencil-square me-2"></i>Editar Producto
+                        </a>
                         {% endif %}
                     </div>
                 </div>

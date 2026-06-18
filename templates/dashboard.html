@@ -51,43 +51,74 @@
         <div class="col-md-6">
             <div class="card border-0 shadow-sm rounded-4 bg-body-tertiary p-4">
                 <h5 class="fw-bold mb-3">Distribución de Citas</h5>
-                <canvas id="graficaCitas"></canvas>
+                {% if data_citas %}
+                    <canvas id="graficaCitas"></canvas>
+                {% else %}
+                    <p class="text-muted text-center py-4">Sin citas este mes</p>
+                {% endif %}
             </div>
         </div>
         <div class="col-md-6">
             <div class="card border-0 shadow-sm rounded-4 bg-body-tertiary p-4">
                 <h5 class="fw-bold mb-3">Ventas por Producto</h5>
-                <canvas id="graficaProductos"></canvas>
+                {% if data_productos %}
+                    <canvas id="graficaProductos"></canvas>
+                {% else %}
+                    <p class="text-muted text-center py-4">Sin ventas este mes</p>
+                {% endif %}
             </div>
         </div>
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // Configuración sencilla para las gráficas
+    {% if data_citas %}
     const ctxCitas = document.getElementById('graficaCitas').getContext('2d');
     new Chart(ctxCitas, {
         type: 'doughnut',
         data: {
-            labels: ['Pendientes', 'Confirmadas', 'Completadas'],
+            labels: {{ labels_citas|safe }},
             datasets: [{
-                data: [12, 19, 3], // Aquí debes pasar los datos desde Django
-                backgroundColor: ['#ffc107', '#3b82f6', '#28a745']
+                data: {{ data_citas|safe }},
+                backgroundColor: ['#ffc107', '#3b82f6', '#28a745', '#dc3545', '#6f42c1']
             }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'bottom' }
+            }
         }
     });
+    {% endif %}
 
+    {% if data_productos %}
     const ctxProductos = document.getElementById('graficaProductos').getContext('2d');
     new Chart(ctxProductos, {
         type: 'bar',
         data: {
-            labels: ['Prod 1', 'Prod 2', 'Prod 3'],
+            labels: {{ labels_productos|safe }},
             datasets: [{
                 label: 'Unidades Vendidas',
-                data: [10, 20, 15],
-                backgroundColor: '#3b82f6'
+                data: {{ data_productos|safe }},
+                backgroundColor: '#3b82f6',
+                borderRadius: 6
             }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { precision: 0 }
+                }
+            }
         }
     });
+    {% endif %}
 </script>
 {% endblock %}

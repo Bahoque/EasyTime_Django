@@ -5,15 +5,31 @@
 
 {% block content %}
 <div class="container mt-5">
-    <div class="text-center mb-5">
-        <h2 class="fw-bold custom-text-bright">Nuestros Servicios de Lavado</h2>
-        <p class="custom-text-dim">Selecciona el tratamiento ideal para tu vehículo en EasyTime.</p>
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <div>
+            <h2 class="fw-bold custom-text-bright mb-1">Nuestros Servicios de Lavado</h2>
+            <p class="custom-text-dim mb-0">Selecciona el tratamiento ideal para tu vehículo en EasyTime.</p>
+        </div>
+        {% if user.is_superuser or user.rol == 'ADMIN' %}
+        <a href="{% url 'agendamiento:crear_servicio' %}" class="btn btn-outline-primary rounded-pill px-4 fw-bold shadow-sm" style="border-style: dashed;">
+            <i class="bi bi-plus-circle me-1"></i> Añadir Servicio
+        </a>
+        {% endif %}
     </div>
 
     <div class="row g-4">
         {% for servicio in servicios %}
         <div class="col-md-4">
-            <div class="card h-100 shadow-sm border-0 rounded-4 overflow-hidden bg-body-tertiary">
+            <div class="card h-100 shadow-sm border-0 rounded-4 overflow-hidden bg-body-tertiary position-relative">
+
+                {% if not servicio.activo %}
+                <div class="position-absolute top-0 start-0 m-2" style="z-index: 10;">
+                    <span class="badge bg-danger rounded-pill px-3 py-2">
+                        <i class="bi bi-x-circle me-1"></i>Inhabilitado
+                    </span>
+                </div>
+                {% endif %}
+
                 {% if servicio.imagen %}
                     {% cloudinary servicio.imagen class="card-img-top" alt=servicio.nombre style="height: 200px; object-fit: cover;" %}
                 {% else %}
@@ -39,9 +55,21 @@
                             </span>
                         </div>
                         
+                        {% if servicio.activo %}
                         <a href="{% url 'agendar_con_servicio' servicio.id %}" class="btn btn-primary w-100 rounded-pill fw-bold shadow-sm py-2">
                             <i class="bi bi-calendar-check me-2"></i>Agendar Cita
                         </a>
+                        {% else %}
+                        <button class="btn btn-secondary w-100 rounded-pill fw-bold py-2" disabled>
+                            <i class="bi bi-slash-circle me-2"></i>No disponible
+                        </button>
+                        {% endif %}
+
+                        {% if user.is_superuser or user.rol == 'ADMIN' %}
+                        <a href="{% url 'agendamiento:editar_servicio' servicio.id %}" class="btn btn-outline-secondary w-100 rounded-pill fw-bold shadow-sm py-2 mt-2">
+                            <i class="bi bi-pencil-square me-2"></i>Editar Servicio
+                        </a>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -58,7 +86,7 @@
         <ul class="pagination justify-content-center">
             {% if servicios.has_previous %}
                 <li class="page-item">
-                    <a class="page-link rounded-pill shadow-sm mx-1 border-0" href="?page=1" title="Primera página">&laquo;</a>
+                    <a class="page-link rounded-pill shadow-sm mx-1 border-0" href="?page=1">&laquo;</a>
                 </li>
                 <li class="page-item">
                     <a class="page-link rounded-pill shadow-sm mx-1 border-0" href="?page={{ servicios.previous_page_number }}">Anterior</a>
@@ -76,7 +104,7 @@
                     <a class="page-link rounded-pill shadow-sm mx-1 border-0" href="?page={{ servicios.next_page_number }}">Siguiente</a>
                 </li>
                 <li class="page-item">
-                    <a class="page-link rounded-pill shadow-sm mx-1 border-0" href="?page={{ servicios.paginator.num_pages }}" title="Última página">&raquo;</a>
+                    <a class="page-link rounded-pill shadow-sm mx-1 border-0" href="?page={{ servicios.paginator.num_pages }}">&raquo;</a>
                 </li>
             {% endif %}
         </ul>
@@ -97,32 +125,21 @@
         padding: 0.5rem 1rem;
         transition: all 0.3s ease;
     }
-    
     .page-link:hover {
         background-color: #0d6efd !important;
         color: white !important;
         transform: translateY(-2px);
     }
-
-    [data-bs-theme="dark"] .page-link {
-        background-color: #1e293b;
-        color: #cbd5e1;
-    }
-
+    [data-bs-theme="dark"] .page-link { background-color: #1e293b; color: #cbd5e1; }
     [data-bs-theme="dark"] .custom-text-bright { color: #F8FAFC; }
     [data-bs-theme="dark"] .custom-text-dim { color: #94A3B8; }
     [data-bs-theme="light"] .custom-text-bright { color: #1E293B; }
     [data-bs-theme="light"] .custom-text-dim { color: #64748B; }
-
     .card { 
         transition: transform 0.3s ease, box-shadow 0.3s ease; 
         border: 1px solid transparent !important;
     }
-    
-    [data-bs-theme="dark"] .card {
-        border: 1px solid #334155 !important;
-    }
-
+    [data-bs-theme="dark"] .card { border: 1px solid #334155 !important; }
     .card:hover {
         transform: translateY(-8px);
         box-shadow: 0 10px 20px rgba(0,0,0,0.2) !important;

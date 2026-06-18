@@ -10,4 +10,5 @@ urlpatterns = [
     path('notificaciones/todas/', views.ver_todas_las_notificaciones, name='ver_todas_las_notificaciones'),
     path('cita/<int:cita_id>/detalle/', views.detalle_cita, name='detalle_cita'),
     path('servicios/crear/', views.crear_servicio, name='crear_servicio'),
+    path('servicios/<int:servicio_id>/editar/', views.editar_servicio, name='editar_servicio'),
 ]

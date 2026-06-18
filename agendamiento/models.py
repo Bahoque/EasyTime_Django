@@ -8,6 +8,7 @@ class Servicio(models.Model):
     precio = models.DecimalField(max_digits=10, decimal_places=2)
     duracion_estimada = models.DurationField(help_text="Formato: HH:MM:SS")
     imagen = CloudinaryField('imagen', null=True, blank=True)
+    activo = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.nombre} - ${self.precio}"
@@ -26,7 +27,6 @@ class Cita(models.Model):
         related_name='citas'
     )
     servicio = models.ForeignKey(Servicio, on_delete=models.PROTECT)
-    
     fecha_hora = models.DateTimeField()
     placa_vehiculo = models.CharField(max_length=10)
     notas = models.TextField(blank=True, null=True)

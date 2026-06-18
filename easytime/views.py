@@ -2,31 +2,32 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
 from usuarios.models import User 
 from agendamiento.models import Cita
+from inventario.models import DetalleVenta
 from django.utils import timezone
-from django.db.models import Count
+from django.db.models import Count, Sum
 from django.db.models.functions import ExtractHour
+import locale
 
-# NOTA: Asegúrate de que este import coincida con el nombre real de tu modelo de ventas/productos
-# Si no manejas ventas todavía, puedes comentar las líneas relacionadas al producto_top.
-# from inventario.models import ProductoVendido 
-
-# 🔹 CORRECCIÓN DE SEGURIDAD: Cambiado de lambda u: u.is_staff a lambda u: u.is_superuser
-# Esto garantiza que SOLO el superusuario pueda acceder a este panel de métricas.
 @user_passes_test(lambda u: u.is_superuser)
 def dashboard_admin(request):
-    # 1. Obtener rango del mes actual para los filtros
     ahora = timezone.now()
     mes_actual = ahora.month
     ano_actual = ahora.year
 
-    # 2. Métricas básicas que ya tenías
+    # Nombres de meses en español
+    MESES_ES = {
+        1: 'Enero', 2: 'Febrero', 3: 'Marzo', 4: 'Abril',
+        5: 'Mayo', 6: 'Junio', 7: 'Julio', 8: 'Agosto',
+        9: 'Septiembre', 10: 'Octubre', 11: 'Noviembre', 12: 'Diciembre'
+    }
+
     total_usuarios = User.objects.count()
     total_citas = Cita.objects.count()
     citas_hoy = Cita.objects.filter(fecha_hora__date=ahora.date()).count()
     proximas_citas = Cita.objects.filter(fecha_hora__gte=ahora).order_by('fecha_hora')[:5]
     ultimos_usuarios = User.objects.all().order_by('-date_joined')[:5]
 
-    # 3. MÉTRICA: Servicio más escogido del mes
+    # Servicio más solicitado del mes
     servicio_top = (
         Cita.objects.filter(fecha_hora__month=mes_actual, fecha_hora__year=ano_actual)
         .values('servicio__nombre') 
@@ -35,7 +36,7 @@ def dashboard_admin(request):
         .first()
     )
 
-    # 4. MÉTRICA: Horario en que más citas salen (Hora Pico del mes)
+    # Hora pico del mes
     hora_pico_query = (
         Cita.objects.filter(fecha_hora__month=mes_actual, fecha_hora__year=ano_actual)
         .annotate(hora=ExtractHour('fecha_hora'))
@@ -45,7 +46,6 @@ def dashboard_admin(request):
         .first()
     )
 
-    # Formatear la hora militar (ej: 14) a un formato más comercial (02:00 PM)
     hora_formateada = None
     if hora_pico_query:
         h = hora_pico_query['hora']
@@ -53,17 +53,41 @@ def dashboard_admin(request):
         h_12 = h - 12 if h > 12 else (12 if h == 0 else h)
         hora_formateada = f"{h_12:02d}:00 {periodo}"
 
-    # 5. MÉTRICA: Producto más vendido (Descomentar cuando tengas el modelo conectado)
-    producto_top = None
-    """
+    # Producto más vendido del mes
     producto_top = (
-        ProductoVendido.objects.filter(fecha_venta__month=mes_actual, fecha_venta__year=ano_actual)
+        DetalleVenta.objects.filter(
+            venta__fecha_venta__month=mes_actual,
+            venta__fecha_venta__year=ano_actual,
+            venta__pagado=True
+        )
         .values('producto__nombre')
-        .annotate(total_vendido=Count('id'))
+        .annotate(total_vendido=Sum('cantidad'))
         .order_by('-total_vendido')
         .first()
     )
-    """
+
+    # Datos para gráfica de citas por estado
+    estados_citas = (
+        Cita.objects.filter(fecha_hora__month=mes_actual, fecha_hora__year=ano_actual)
+        .values('estado')
+        .annotate(total=Count('id'))
+    )
+    labels_citas = [e['estado'] for e in estados_citas]
+    data_citas = [e['total'] for e in estados_citas]
+
+    # Datos para gráfica de productos más vendidos (top 5)
+    productos_ventas = (
+        DetalleVenta.objects.filter(
+            venta__fecha_venta__month=mes_actual,
+            venta__fecha_venta__year=ano_actual,
+            venta__pagado=True
+        )
+        .values('producto__nombre')
+        .annotate(total_vendido=Sum('cantidad'))
+        .order_by('-total_vendido')[:5]
+    )
+    labels_productos = [p['producto__nombre'] for p in productos_ventas]
+    data_productos = [p['total_vendido'] for p in productos_ventas]
 
     context = {
         'total_usuarios': total_usuarios,
@@ -71,18 +95,22 @@ def dashboard_admin(request):
         'citas_hoy': citas_hoy,
         'proximas_citas': proximas_citas,
         'ultimos_usuarios': ultimos_usuarios,
-        
-        # Nuevas variables de métricas
         'servicio_top': servicio_top,
         'hora_pico': hora_formateada,
         'total_citas_hora': hora_pico_query['total_citas'] if hora_pico_query else 0,
         'producto_top': producto_top,
-        'mes_nombre': ahora.strftime('%B').capitalize(),
+        'mes_nombre': MESES_ES[mes_actual],
+        'labels_citas': labels_citas,
+        'data_citas': data_citas,
+        'labels_productos': labels_productos,
+        'data_productos': data_productos,
     }
     return render(request, 'dashboard.html', context)
 
+
 def home(request):
     return render(request, 'home.html')
+
 
 @login_required
 def gestion_citas(request):

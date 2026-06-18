@@ -51,16 +51,9 @@
                     </div>
                     <h3 class="card-title mt-2 fw-bold custom-text-bright">Servicios</h3>
                     <p class="card-text custom-text-dim">Conoce nuestros paquetes de lavado y limpieza premium.</p>
-
                     <a href="{% url 'servicios' %}" class="btn btn-primary w-100 mt-auto rounded-pill fw-bold py-2">
                         Ver Servicios
                     </a>
-
-                    {% if user.is_superuser or user.rol == 'ADMIN' %}
-                    <a href="{% url 'agendamiento:crear_servicio' %}" class="btn btn-outline-secondary w-100 mt-2 rounded-pill fw-bold py-2" style="border-style: dashed;">
-                        <i class="bi bi-plus-circle me-1"></i> Añadir Nuevo Servicio
-                    </a>
-                    {% endif %}
                 </div>
             </div>
         </div>
@@ -102,36 +95,20 @@
 </div>
 
 <style>
-    [data-bs-theme="dark"] .custom-text-bright {
-        color: #E2E8F0;
-    }
-
-    [data-bs-theme="dark"] .custom-text-dim {
-        color: #94A3B8;
-    }
-
-    [data-bs-theme="light"] .custom-text-bright {
-        color: #212529;
-    }
-
-    [data-bs-theme="light"] .custom-text-dim {
-        color: #6c757d;
-    }
+    [data-bs-theme="dark"] .custom-text-bright { color: #E2E8F0; }
+    [data-bs-theme="dark"] .custom-text-dim { color: #94A3B8; }
+    [data-bs-theme="light"] .custom-text-bright { color: #212529; }
+    [data-bs-theme="light"] .custom-text-dim { color: #6c757d; }
 
     .card {
         transition: transform 0.3s ease, box-shadow 0.3s ease;
         border: 1px solid transparent !important;
     }
-
-    [data-bs-theme="dark"] .card {
-        border: 1px solid #334155 !important;
-    }
-
+    [data-bs-theme="dark"] .card { border: 1px solid #334155 !important; }
     .card:hover {
         transform: translateY(-10px);
         box-shadow: 0 12px 24px rgba(0,0,0,0.15) !important;
     }
-
     .btn-primary {
         background-color: var(--blue) !important;
         border-color: var(--blue) !important;

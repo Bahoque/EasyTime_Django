@@ -6,6 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EasyTime</title>
 
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-bs-theme', savedTheme);
+        })();
+    </script>
+
     <link rel="shortcut icon" type="image/x-icon" href="{% static 'img/favicon.ico' %}">
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -72,11 +79,24 @@
         .form-control:focus, input:focus { box-shadow: none !important; outline: none !important; border-color: #dee2e6 !important; }
         #themeBtn { cursor: pointer; transition: transform 0.3s ease; }
         #themeBtn:hover { transform: scale(1.1); }
+
+        .navbar {
+            isolation: isolate;
+            contain: layout style;
+            min-height: 70px;
+        }
+        [data-bs-theme="light"] .navbar,
+        [data-bs-theme="dark"] .navbar {
+            display: flex !important;
+        }
+        .navbar-collapse {
+            background-color: inherit;
+        }
     </style>
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+<nav class="navbar navbar-expand-lg navbar-dark sticky-top" style="background-color: var(--blue, #459fe9);">
     <div class="container">
         <a class="navbar-brand fw-bold d-flex align-items-center" href="{% url 'home' %}">
             <img src="{% static 'img/favicon-blanco.png' %}" alt="Logo EasyTime" width="30" height="30" class="d-inline-block align-text-top me-2">
@@ -88,7 +108,7 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav me-auto">
                 <li class="nav-item"><a class="nav-link text-white" href="{% url 'mis_pqrs' %}">Soporte y PQRS</a></li>
-                {% if user.is_superuser %}
+                {% if user.is_superuser or user.rol == 'ADMIN' %}
                 <li class="nav-item">
                     <a class="nav-link text-white" href="{% url 'dashboard' %}">
                         <i class="bi bi-bar-chart-line-fill me-1"></i> Dashboard

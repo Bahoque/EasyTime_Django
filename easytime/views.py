@@ -8,13 +8,15 @@ from django.db.models import Count, Sum
 from django.db.models.functions import ExtractHour
 import locale
 
-@user_passes_test(lambda u: u.is_superuser)
+def es_admin_o_superuser(user):
+    return user.is_authenticated and (user.is_superuser or getattr(user, 'rol', None) == 'ADMIN')
+
+@user_passes_test(es_admin_o_superuser, login_url='home')
 def dashboard_admin(request):
     ahora = timezone.now()
     mes_actual = ahora.month
     ano_actual = ahora.year
 
-    # Nombres de meses en español
     MESES_ES = {
         1: 'Enero', 2: 'Febrero', 3: 'Marzo', 4: 'Abril',
         5: 'Mayo', 6: 'Junio', 7: 'Julio', 8: 'Agosto',
@@ -27,7 +29,6 @@ def dashboard_admin(request):
     proximas_citas = Cita.objects.filter(fecha_hora__gte=ahora).order_by('fecha_hora')[:5]
     ultimos_usuarios = User.objects.all().order_by('-date_joined')[:5]
 
-    # Servicio más solicitado del mes
     servicio_top = (
         Cita.objects.filter(fecha_hora__month=mes_actual, fecha_hora__year=ano_actual)
         .values('servicio__nombre') 
@@ -36,7 +37,6 @@ def dashboard_admin(request):
         .first()
     )
 
-    # Hora pico del mes
     hora_pico_query = (
         Cita.objects.filter(fecha_hora__month=mes_actual, fecha_hora__year=ano_actual)
         .annotate(hora=ExtractHour('fecha_hora'))
@@ -53,7 +53,6 @@ def dashboard_admin(request):
         h_12 = h - 12 if h > 12 else (12 if h == 0 else h)
         hora_formateada = f"{h_12:02d}:00 {periodo}"
 
-    # Producto más vendido del mes
     producto_top = (
         DetalleVenta.objects.filter(
             venta__fecha_venta__month=mes_actual,
@@ -66,7 +65,6 @@ def dashboard_admin(request):
         .first()
     )
 
-    # Datos para gráfica de citas por estado
     estados_citas = (
         Cita.objects.filter(fecha_hora__month=mes_actual, fecha_hora__year=ano_actual)
         .values('estado')
@@ -75,7 +73,6 @@ def dashboard_admin(request):
     labels_citas = [e['estado'] for e in estados_citas]
     data_citas = [e['total'] for e in estados_citas]
 
-    # Datos para gráfica de productos más vendidos (top 5)
     productos_ventas = (
         DetalleVenta.objects.filter(
             venta__fecha_venta__month=mes_actual,

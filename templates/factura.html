@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block content %}
+<div class="container mt-5 pb-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+
+            <!-- Botones de acción -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <a href="{% url 'mis_citas' %}" class="btn btn-outline-secondary rounded-pill px-4">
+                    <i class="bi bi-arrow-left me-1"></i> Mis Citas
+                </a>
+                <a href="{% url 'agendamiento:descargar_factura_pdf' factura.id %}" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">
+                    <i class="bi bi-download me-1"></i> Descargar PDF
+                </a>
+            </div>
+
+            <!-- Factura -->
+            <div class="card border-0 shadow rounded-4 overflow-hidden">
+
+                <!-- Header -->
+                <div class="p-4 text-white" style="background: linear-gradient(135deg, #459fe9, #1a56db);">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h3 class="fw-bold mb-0">EasyTime</h3>
+                            <small class="opacity-75">Servicio profesional de lavado vehicular</small>
+                        </div>
+                        <div class="text-end">
+                            <h4 class="fw-bold mb-0">FACTURA</h4>
+                            <span class="badge bg-white text-primary fw-bold fs-6">{{ factura.numero }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body p-4">
+
+                    <!-- Info general -->
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-6">
+                            <h6 class="text-secondary text-uppercase fw-bold small mb-2">Cliente</h6>
+                            <p class="mb-0 fw-bold">{{ factura.cliente.get_full_name|default:factura.cliente.username }}</p>
+                            <p class="mb-0 text-secondary small">{{ factura.cliente.email }}</p>
+                        </div>
+                        <div class="col-md-6 text-md-end">
+                            <h6 class="text-secondary text-uppercase fw-bold small mb-2">Factura</h6>
+                            <p class="mb-0">Fecha: <strong>{{ factura.fecha_emision|date:"d/m/Y H:i" }}</strong></p>
+                            <p class="mb-0">
+                                Estado:
+                                <span class="badge {% if factura.estado == 'PAGADA' %}bg-success{% elif factura.estado == 'CANCELADA' %}bg-danger{% else %}bg-warning text-dark{% endif %}">
+                                    {{ factura.get_estado_display }}
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <hr class="opacity-25">
+
+                    <!-- Detalle del servicio -->
+                    {% if factura.cita %}
+                    <h6 class="text-secondary text-uppercase fw-bold small mb-3">Detalle del Servicio</h6>
+                    <div class="card bg-body-tertiary border-0 rounded-3 p-3 mb-4">
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <small class="text-secondary">Servicio</small>
+                                <p class="fw-bold mb-0">{{ factura.cita.servicio.nombre }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-secondary">Operario</small>
+                                <p class="fw-bold mb-0">{{ factura.cita.operario|default:"No asignado" }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-secondary">Fecha y hora</small>
+                                <p class="fw-bold mb-0">{{ factura.cita.fecha_hora|date:"d/m/Y H:i" }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-secondary">Placa</small>
+                                <p class="fw-bold mb-0">{{ factura.cita.placa_vehiculo }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-secondary">Duración estimada</small>
+                                <p class="fw-bold mb-0">{{ factura.cita.servicio.duracion_estimada }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-secondary">Estado de la cita</small>
+                                <p class="fw-bold mb-0">{{ factura.cita.get_estado_display }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Tabla de cobro -->
+                    <h6 class="text-secondary text-uppercase fw-bold small mb-3">Resumen de Cobro</h6>
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Descripción</th>
+                                    <th class="text-center">Cantidad</th>
+                                    <th class="text-end">Precio Unit.</th>
+                                    <th class="text-end">Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if factura.cita %}
+                                <tr>
+                                    <td>
+                                        <i class="bi bi-wrench me-2 text-primary"></i>
+                                        {{ factura.cita.servicio.nombre }}
+                                        <small class="text-secondary d-block">Servicio de lavado</small>
+                                    </td>
+                                    <td class="text-center">1</td>
+                                    <td class="text-end">${{ factura.cita.servicio.precio|floatformat:0|intcomma }}</td>
+                                    <td class="text-end fw-bold">${{ factura.cita.servicio.precio|floatformat:0|intcomma }}</td>
+                                </tr>
+                                {% endif %}
+
+                                {% for item in factura.items.all %}
+                                <tr>
+                                    <td>
+                                        <i class="bi bi-box me-2 text-success"></i>
+                                        {{ item.producto.nombre }}
+                                        <small class="text-secondary d-block">Producto</small>
+                                    </td>
+                                    <td class="text-center">{{ item.cantidad }}</td>
+                                    <td class="text-end">${{ item.precio_unitario|floatformat:0|intcomma }}</td>
+                                    <td class="text-end fw-bold">${{ item.subtotal|floatformat:0|intcomma }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr class="table-primary">
+                                    <th colspan="3" class="text-end">TOTAL</th>
+                                    <th class="text-end fs-5">${{ factura.total|floatformat:0|intcomma }}</th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+
+                    <!-- Footer factura -->
+                    <div class="text-center mt-4 pt-3 border-top border-opacity-25">
+                        <p class="text-secondary small mb-0">
+                            <i class="bi bi-geo-alt me-1"></i> Bogotá, Colombia &nbsp;|&nbsp;
+                            <i class="bi bi-envelope me-1"></i> contacto@easytime.com
+                        </p>
+                        <p class="text-secondary small">Gracias por confiar en EasyTime 🚗</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

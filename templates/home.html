@@ -91,6 +91,24 @@
             </div>
         </div>
         {% endif %}
+
+        {% if user.rol == 'ADMIN' or user.is_superuser %}
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm p-3 bg-body-tertiary rounded-4">
+                <div class="card-body d-flex flex-column">
+                    <div class="mb-3">
+                        <i class="bi bi-person-gear display-4" style="color: var(--yellow);"></i>
+                    </div>
+                    <h3 class="card-title mt-2 fw-bold custom-text-bright">Operarios</h3>
+                    <p class="card-text custom-text-dim">Gestiona el equipo de lavado.</p>
+                    <a href="{% url 'agendamiento:lista_operarios' %}" class="btn btn-warning w-100 mt-auto rounded-pill fw-bold py-2">
+                        Ver Operarios
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
     </div>
 </div>
 

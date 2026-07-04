@@ -1,129 +1,400 @@
 {% extends 'base.html' %}
 {% load humanize %}
+{% load cloudinary %}
 
 {% block content %}
-<div class="container mt-5">
+<div class="container mt-5 pb-5">
     <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-6">
-            <div class="card shadow-lg border-0 p-4 rounded-4 bg-body-tertiary">
-                <h2 class="text-center mb-4 fw-bold custom-text-bright">Agendar Cita</h2>
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 bg-body-tertiary">
+                <div class="card-body p-4 p-sm-5">
 
-                <div class="mb-4 p-3 bg-primary bg-opacity-10 border-start border-primary border-4 rounded-3 d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="mb-1 fw-bold text-primary text-uppercase small">Valor del Servicio</h6>
-                        <h3 class="mb-0 fw-bold custom-text-bright" id="precio-resumen">
-                            {% if servicio_seleccionado %}
-                                ${{ servicio_seleccionado.precio|floatformat:0|intcomma }}
-                            {% else %}
-                                $0
-                            {% endif %}
-                        </h3>
-                    </div>
-                    <i class="bi bi-cash-stack fs-1 text-primary opacity-50"></i>
-                </div>
-
-                <form method="POST" id="form-agendar">
-                    {% csrf_token %}
-                    
-                    <div class="row g-3 text-start">
-                        {% for field in form %}
-                            <div class="col-12 mb-3">
-                                <label class="form-label fw-bold small custom-text-bright">{{ field.label }}</label>
-                                <div class="django-field-wrapper">
-                                    {# Django renderiza el input aquí y el CSS de abajo le da el estilo #}
-                                    {{ field }}
-                                </div>
-                                {% if field.errors %}
-                                    <div class="text-danger small mt-1">{{ field.errors }}</div>
-                                {% endif %}
-                            </div>
-                        {% endfor %}
-                    </div>
-
-                    <div class="mt-4">
-                        <button type="submit" class="btn btn-primary btn-lg w-100 rounded-pill shadow-sm fw-bold">
-                            <i class="bi bi-calendar-check me-2"></i>Confirmar Agendamiento
-                        </button>
-                        
-                        <a href="{% url 'servicios' %}" class="btn btn-link w-100 mt-2 text-decoration-none custom-text-dim small">
-                            <i class="bi bi-arrow-left me-1"></i>Cambiar servicio
+                    <div class="d-flex align-items-center mb-4">
+                        <a href="{% url 'servicios' %}" class="btn btn-link p-0 me-3 text-body">
+                            <i class="bi bi-arrow-left-circle-fill fs-2"></i>
                         </a>
-                        <div class="text-center mt-5 mb-4">
-                        <hr class="text-muted opacity-25"> <!-- Una línea divisoria sutil -->
-                            <a href="{% url 'home' %}" class="btn btn-outline-secondary rounded-pill px-4 shadow-sm">
-                                <i class="bi bi-arrow-left me-2"></i>Volver al Inicio
-                            </a>
-                        </div>  
+                        <div>
+                            <h3 class="card-title mb-0 fw-bold">Agendar Cita</h3>
+                            <small class="text-secondary">Completa el formulario para reservar tu servicio</small>
+                        </div>
                     </div>
-                </form>
+
+                    <hr class="opacity-25 mb-4">
+
+                    <form method="post" id="form-agendar">
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">{{ form.servicio.label }}</label>
+                            {{ form.servicio }}
+                            {% if form.servicio.errors %}
+                                <div class="text-danger small mt-1">{{ form.servicio.errors|striptags }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">{{ form.fecha_hora.label }}</label>
+                            {{ form.fecha_hora }}
+                            {% if form.fecha_hora.errors %}
+                                <div class="text-danger small mt-1">{{ form.fecha_hora.errors|striptags }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">{{ form.operario.label }}</label>
+                            <div id="operario-container">
+                                {{ form.operario }}
+                            </div>
+                            <div id="operario-loading" class="text-muted small mt-1" style="display:none;">
+                                <div class="spinner-border spinner-border-sm me-1"></div>
+                                Verificando disponibilidad...
+                            </div>
+                            <div id="operario-aviso" class="text-warning small mt-1">
+                                <i class="bi bi-exclamation-triangle me-1"></i>
+                                Selecciona un servicio y fecha/hora para ver operarios disponibles.
+                            </div>
+                            {% if form.operario.errors %}
+                                <div class="text-danger small mt-1">{{ form.operario.errors|striptags }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">{{ form.placa_vehiculo.label }}</label>
+                            {{ form.placa_vehiculo }}
+                            {% if form.placa_vehiculo.errors %}
+                                <div class="text-danger small mt-1">{{ form.placa_vehiculo.errors|striptags }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">{{ form.notas.label }}</label>
+                            {{ form.notas }}
+                        </div>
+
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger rounded-3">{{ form.non_field_errors }}</div>
+                        {% endif %}
+
+                        <hr class="opacity-25 mb-4">
+
+                        <div class="mb-4">
+                            <h5 class="fw-bold mb-1">
+                                <i class="bi bi-bag-plus me-2 text-primary"></i>¿Deseas agregar productos?
+                            </h5>
+                            <p class="text-secondary small mb-3">Opcional — se incluirán en tu factura.</p>
+
+                            <!-- Tabs -->
+                            <div class="d-flex gap-2 mb-3" id="tabs-productos">
+                                {% if items_carrito %}
+                                <button class="btn btn-primary rounded-pill px-4 tab-btn" type="button" data-tab="carrito">
+                                    <i class="bi bi-cart3 me-1"></i> Desde mi carrito
+                                    <span class="badge bg-white text-primary ms-1">{{ items_carrito|length }}</span>
+                                </button>
+                                {% endif %}
+                                {% comment %} <button class="btn {% if not items_carrito %}btn-primary{% else %}btn-outline-primary{% endif %} rounded-pill px-4 tab-btn" type="button" data-tab="nuevo">
+                                    <i class="bi bi-plus-circle me-1"></i> Agregar del catálogo
+                                </button> {% endcomment %}
+                            </div>
+
+                            <!-- Tab carrito -->
+                            {% if items_carrito %}
+                            <div id="tab-carrito" class="tab-contenido">
+                                {% comment %} <p class="text-secondary small mb-3">Selecciona y ajusta la cantidad de los productos de tu carrito:</p> {% endcomment %}
+                                <div class="row g-3">
+                                    {% for item in items_carrito %}
+                                    <div class="col-md-6">
+                                        <div class="card border-0 rounded-3 bg-body h-100">
+                                            <div class="card-body p-3">
+                                                <div class="d-flex align-items-center gap-3 mb-2">
+                                                    <input type="checkbox" name="item_carrito_id" value="{{ item.id }}" class="form-check-input flex-shrink-0" id="item-{{ item.id }}" checked>
+                                                    {% if item.producto.imagen %}
+                                                        {% cloudinary item.producto.imagen style="width:50px;height:50px;object-fit:cover;border-radius:8px;" alt=item.producto.nombre %}
+                                                    {% else %}
+                                                        <div class="bg-secondary-subtle rounded-2 d-flex align-items-center justify-content-center flex-shrink-0" style="width:50px;height:50px;">
+                                                            <i class="bi bi-image text-secondary"></i>
+                                                        </div>
+                                                    {% endif %}
+                                                    <div class="flex-grow-1">
+                                                        <label class="fw-semibold d-block mb-0" for="item-{{ item.id }}">{{ item.producto.nombre }}</label>
+                                                        <small class="text-primary fw-bold">${{ item.precio_unitario|floatformat:0|intcomma }} c/u</small>
+                                                    </div>
+                                                </div>
+                                                <div class="d-flex align-items-center gap-2 mt-2">
+                                                    <label class="text-secondary small mb-0">Cantidad:</label>
+                                                    <div class="cantidad-control d-flex align-items-center">
+                                                        {% comment %} <button type="button" class="btn btn-outline-primary btn-menos"
+                                                            onclick="cambiarCantidadCarrito(this, -1, {{ item.producto.stock_actual|floatformat:0 }})">
+                                                            <i class="bi bi-dash-lg"></i>
+                                                        </button> {% endcomment %}
+                                                        <input type="text" name="cantidad_carrito" readonly
+                                                               value="{{ item.cantidad }}"
+                                                               class="form-control text-center fw-bold mx-2">
+                                                        {% comment %} <button type="button" class="btn btn-outline-primary btn-mas"
+                                                            onclick="cambiarCantidadCarrito(this, 1, {{ item.producto.stock_actual|floatformat:0 }})">
+                                                            <i class="bi bi-plus-lg"></i>
+                                                        </button> {% endcomment %}
+                                                    </div>
+                                                    <small class="text-secondary">Stock: {{ item.producto.stock_actual|floatformat:0 }}</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Tab catálogo -->
+                            <div id="tab-nuevo" class="tab-contenido {% if items_carrito %}d-none{% endif %}">
+                                <div id="productos-lista">
+                                    <div class="producto-fila mb-3">
+                                        <div class="card border-0 rounded-3 bg-body p-3">
+                                            <div class="row g-2 align-items-center">
+                                                <div class="col-md-6">
+                                                    <select name="producto_id" class="form-select selector-producto">
+                                                        <option value="">— Selecciona un producto —</option>
+                                                        {% for producto in productos %}
+                                                            <option value="{{ producto.id }}"
+                                                                    data-precio="{{ producto.precio_venta }}"
+                                                                    data-stock="{{ producto.stock_actual|floatformat:0 }}"
+                                                                    data-nombre="{{ producto.nombre }}"
+                                                                    data-imagen="{% if producto.imagen %}{{ producto.imagen.url }}{% endif %}">
+                                                                {{ producto.nombre }} — ${{ producto.precio_venta|floatformat:0|intcomma }}
+                                                            </option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="input-group rounded-pill overflow-hidden border border-primary-subtle">
+                                                        <button class="btn btn-primary border-0 px-2" type="button" onclick="cambiarCantidadNuevo(this, -1)">
+                                                            <i class="bi bi-dash"></i>
+                                                        </button>
+                                                        <input type="number" name="cantidad" value="1" min="1"
+                                                               class="form-control border-0 text-center fw-bold bg-body"
+                                                               onkeydown="return false;">
+                                                        <button class="btn btn-primary border-0 px-2" type="button" onclick="cambiarCantidadNuevo(this, 1)">
+                                                            <i class="bi bi-plus"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <button type="button" class="btn btn-outline-danger w-100 rounded-3 btn-eliminar-fila">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <!-- Preview producto -->
+                                            <div class="preview-producto d-none mt-2 align-items-center gap-2 p-2 rounded-3 bg-body-tertiary">
+                                                <img src="" alt="" class="preview-img rounded-2" style="width:45px;height:45px;object-fit:cover;">
+                                                <div>
+                                                    <span class="fw-semibold preview-nombre d-block small"></span>
+                                                    <span class="text-primary small preview-precio"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-outline-primary rounded-pill" id="btn-agregar-producto">
+                                    <i class="bi bi-plus-circle me-1"></i> Agregar otro producto
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Resumen precio -->
+                        <div class="card bg-primary bg-opacity-10 border-primary border-opacity-25 rounded-3 p-3 mb-4 d-none" id="resumen-precio">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="fw-semibold">Servicio:</span>
+                                <span id="precio-servicio">$0</span>
+                            </div>
+                            <hr class="opacity-25 my-2">
+                            <div class="d-flex justify-content-between align-items-center fw-bold">
+                                <span>Total estimado:</span>
+                                <span class="text-primary fs-5" id="precio-total">$0</span>
+                            </div>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg rounded-pill fw-bold shadow-sm py-3">
+                                <i class="bi bi-calendar-check me-2"></i>Continuar al pago
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
+<style>
+    .form-control, .form-select {
+        border-radius: 0.75rem !important;
+        padding: 0.6rem 1rem !important;
+    }
+    .tab-btn { transition: all 0.2s ease; }
+    .cantidad-control { width: 140px; }
+    .cantidad-control input {
+        width: 50px;
+        border: none;
+        background: transparent;
+        font-size: 18px;
+        box-shadow: none;
+    }
+    .cantidad-control button {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+    }
+</style>
+
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const selectServicio = document.querySelector('select[name="servicio"]');
-        const displayPrecio = document.getElementById('precio-resumen');
+    const servicioSelect = document.getElementById('id_servicio');
+    const fechaInput = document.getElementById('id_fecha_hora');
+    const operarioSelect = document.getElementById('id_operario');
+    const loadingDiv = document.getElementById('operario-loading');
+    const avisoDiv = document.getElementById('operario-aviso');
 
-        const listaPrecios = {
-            {% for s in form.fields.servicio.queryset %}
-                "{{ s.id }}": "{{ s.precio|floatformat:0 }}"{% if not forloop.last %},{% endif %}
-            {% endfor %}
-        };
+    const preciosServicios = {
+        {% for s in form.servicio.field.queryset %}
+        "{{ s.id }}": {{ s.precio }},
+        {% endfor %}
+    };
 
-        function actualizarPrecio() {
-            if (!selectServicio) return;
-            const idSeleccionado = selectServicio.value;
-            // Obtenemos el precio y le añadimos puntos de miles para que se vea bien
-            const precioRaw = listaPrecios[idSeleccionado] || "0";
-            const precioConPuntos = precioRaw.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-            
-            displayPrecio.innerText = '$' + precioConPuntos;
+    // ── Tabs ──
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.tab-contenido').forEach(t => t.classList.add('d-none'));
+            document.querySelectorAll('.tab-btn').forEach(b => {
+                b.classList.remove('btn-primary');
+                b.classList.add('btn-outline-primary');
+            });
+            this.classList.remove('btn-outline-primary');
+            this.classList.add('btn-primary');
+            document.getElementById('tab-' + this.dataset.tab).classList.remove('d-none');
+        });
+    });
+
+    // ── Operarios ──
+    function actualizarOperarios() {
+        const servicioId = servicioSelect.value;
+        const fechaHora = fechaInput.value;
+        if (!servicioId || !fechaHora) { avisoDiv.style.display = 'block'; return; }
+        avisoDiv.style.display = 'none';
+        loadingDiv.style.display = 'block';
+        operarioSelect.disabled = true;
+
+        fetch(`/agendamiento/api/operarios-disponibles/?servicio_id=${servicioId}&fecha_hora=${fechaHora}`)
+            .then(r => r.json())
+            .then(data => {
+                loadingDiv.style.display = 'none';
+                operarioSelect.disabled = false;
+                operarioSelect.innerHTML = '<option value="">— Selecciona un operario —</option>';
+                if (data.operarios.length === 0) {
+                    operarioSelect.innerHTML = '<option value="" disabled>No hay operarios disponibles en ese horario</option>';
+                } else {
+                    data.operarios.forEach(op => {
+                        const opt = document.createElement('option');
+                        opt.value = op.id;
+                        opt.textContent = op.especialidad ? `${op.nombre} — ${op.especialidad}` : op.nombre;
+                        operarioSelect.appendChild(opt);
+                    });
+                }
+                actualizarResumen();
+            })
+            .catch(() => { loadingDiv.style.display = 'none'; operarioSelect.disabled = false; });
+    }
+
+    function actualizarResumen() {
+        const servicioId = servicioSelect.value;
+        if (servicioId && preciosServicios[servicioId]) {
+            const precio = preciosServicios[servicioId];
+            document.getElementById('precio-servicio').textContent = '$' + precio.toLocaleString('es-CO');
+            document.getElementById('precio-total').textContent = '$' + precio.toLocaleString('es-CO');
+            document.getElementById('resumen-precio').classList.remove('d-none');
+        } else {
+            document.getElementById('resumen-precio').classList.add('d-none');
         }
+    }
 
-        if (selectServicio) {
-            selectServicio.addEventListener('change', actualizarPrecio);
-            actualizarPrecio();
+    servicioSelect.addEventListener('change', () => { actualizarOperarios(); actualizarResumen(); });
+    fechaInput.addEventListener('change', actualizarOperarios);
+
+    // ── Cantidad carrito ──
+    function cambiarCantidadCarrito(btn, cambio, stock) {
+        const control = btn.closest('.cantidad-control');
+        const input = control.querySelector('input');
+        let cantidad = parseInt(input.value) || 1;
+        cantidad += cambio;
+        if (cantidad < 1) cantidad = 1;
+        if (cantidad > stock) cantidad = stock;
+        input.value = cantidad;
+        control.querySelector('.btn-menos').disabled = cantidad <= 1;
+        control.querySelector('.btn-mas').disabled = cantidad >= stock;
+    }
+
+    // ── Cantidad catálogo ──
+    function cambiarCantidadNuevo(btn, cambio) {
+        const input = btn.parentElement.querySelector('input[type="number"]');
+        const fila = btn.closest('.producto-fila');
+        const sel = fila.querySelector('.selector-producto');
+        const opt = sel.options[sel.selectedIndex];
+        const stock = opt && opt.dataset.stock ? parseInt(opt.dataset.stock) : 999;
+        let val = parseInt(input.value) + cambio;
+        if (val >= 1 && val <= stock) input.value = val;
+        else if (val > stock) alert(`Solo hay ${stock} unidades disponibles.`);
+    }
+
+    // ── Preview producto catálogo ──
+    function actualizarPreview(select) {
+        const fila = select.closest('.producto-fila');
+        const preview = fila.querySelector('.preview-producto');
+        const img = fila.querySelector('.preview-img');
+        const nombre = fila.querySelector('.preview-nombre');
+        const precio = fila.querySelector('.preview-precio');
+        const opt = select.options[select.selectedIndex];
+        if (select.value && opt) {
+            if (opt.dataset.imagen) { img.src = opt.dataset.imagen; img.style.display = 'block'; }
+            else { img.style.display = 'none'; }
+            nombre.textContent = opt.dataset.nombre;
+            precio.textContent = '$' + parseFloat(opt.dataset.precio).toLocaleString('es-CO') + ' c/u';
+            preview.classList.remove('d-none');
+            preview.classList.add('d-flex');
+        } else {
+            preview.classList.add('d-none');
+            preview.classList.remove('d-flex');
+        }
+    }
+
+    document.querySelector('.selector-producto').addEventListener('change', function() {
+        actualizarPreview(this);
+    });
+
+    // ── Agregar fila catálogo ──
+    const plantillaFila = document.querySelector('.producto-fila').cloneNode(true);
+
+    document.getElementById('btn-agregar-producto').addEventListener('click', () => {
+        const nueva = plantillaFila.cloneNode(true);
+        nueva.querySelector('select').value = '';
+        nueva.querySelector('input[type="number"]').value = '1';
+        nueva.querySelector('.preview-producto').classList.add('d-none');
+        nueva.querySelector('.preview-producto').classList.remove('d-flex');
+        nueva.querySelector('.selector-producto').addEventListener('change', function() {
+            actualizarPreview(this);
+        });
+        document.getElementById('productos-lista').appendChild(nueva);
+    });
+
+    // ── Eliminar fila ──
+    document.getElementById('productos-lista').addEventListener('click', (e) => {
+        if (e.target.closest('.btn-eliminar-fila')) {
+            const filas = document.querySelectorAll('.producto-fila');
+            if (filas.length > 1) {
+                e.target.closest('.producto-fila').remove();
+            } else {
+                const sel = document.querySelector('.selector-producto');
+                if (sel) { sel.value = ''; actualizarPreview(sel); }
+                document.querySelector('.producto-fila input[type="number"]').value = '1';
+            }
         }
     });
 </script>
-
-
-<style>
-    /* VARIABLES DE COLOR (Blanco Hueso para Modo Oscuro) */
-    [data-bs-theme="dark"] .custom-text-bright { color: #E2E8F0; }
-    [data-bs-theme="dark"] .custom-text-dim { color: #94A3B8; }
-    [data-bs-theme="light"] .custom-text-bright { color: #212529; }
-    [data-bs-theme="light"] .custom-text-dim { color: #6c757d; }
-
-    /* ESTILO UNIFICADO DE INPUTS PARA DJANGO */
-    input, select, textarea {
-        display: block;
-        width: 100% !important;
-        padding: 12px 15px !important;
-        font-size: 1rem;
-        border-radius: 12px !important;
-        border: 1px solid #ced4da !important;
-        background-color: var(--bs-body-bg) !important;
-        color: var(--bs-body-color) !important;
-        transition: all 0.3s ease;
-    }
-
-    input:focus, select:focus, textarea:focus {
-        border-color: #0d6efd !important;
-        outline: 0;
-        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15) !important;
-    }
-
-    /* Ajuste para que el Textarea no se vea muy pequeño */
-    textarea {
-        min-height: 100px;
-    }
-
-    /* Ajuste para el cuadro de precio en modo oscuro */
-    .bg-primary-subtle, .bg-opacity-10 {
-        background-color: rgba(13, 110, 253, 0.1) !important;
-    }
-</style>
 {% endblock %}

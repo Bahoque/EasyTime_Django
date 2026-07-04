@@ -1,0 +1,257 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row g-5">
+
+        <!-- Resumen del pedido -->
+        <div class="col-md-5 col-lg-4 order-md-last">
+            <h4 class="fw-bold text-primary mb-3">Resumen</h4>
+
+            <ul class="list-group mb-3 shadow-sm border-0">
+                <!-- Servicio -->
+                {% if factura.cita %}
+                <li class="list-group-item bg-body-tertiary border-0 rounded-3 mb-2">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <span class="badge bg-primary mb-1">Servicio</span>
+                            <h6 class="fw-bold mb-0">{{ factura.cita.servicio.nombre }}</h6>
+                            <small class="text-secondary">
+                                <i class="bi bi-person me-1"></i>{{ factura.cita.operario|default:"Sin operario" }}<br>
+                                <i class="bi bi-clock me-1"></i>{{ factura.cita.fecha_hora|date:"d/m/Y H:i" }}<br>
+                                <i class="bi bi-car-front me-1"></i>{{ factura.cita.placa_vehiculo }}
+                            </small>
+                        </div>
+                        <span class="fw-bold text-primary">${{ factura.cita.servicio.precio|floatformat:0|intcomma }}</span>
+                    </div>
+                </li>
+                {% endif %}
+
+                <!-- Productos -->
+                {% for item in factura.items.all %}
+                <li class="list-group-item bg-body-tertiary border-0 rounded-3 mb-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="badge bg-success mb-1">Producto</span>
+                            <h6 class="fw-bold mb-0">{{ item.producto.nombre }}</h6>
+                            <small class="text-secondary">Cantidad: {{ item.cantidad }}</small>
+                        </div>
+                        <span class="fw-bold">${{ item.subtotal|floatformat:0|intcomma }}</span>
+                    </div>
+                </li>
+                {% endfor %}
+
+                <!-- Total -->
+                <li class="list-group-item bg-primary text-white rounded-3 border-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="fw-bold fs-6">TOTAL A PAGAR</span>
+                        <strong class="fs-5">${{ factura.total|floatformat:0|intcomma }}</strong>
+                    </div>
+                </li>
+            </ul>
+
+            <!-- Tarjeta visual -->
+            <div class="credit-card mb-3">
+                <div class="credit-card-inner">
+                    <div class="credit-card-front">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <i class="bi bi-wifi fs-4 text-white opacity-75" style="transform: rotate(90deg);"></i>
+                            <span class="text-white fw-bold fs-5">EasyTime</span>
+                        </div>
+                        <div class="chip"></div>
+                        <p class="card-number text-white fw-bold letter-spacing mb-0" id="preview-number">
+                            •••• •••• •••• ••••
+                        </p>
+                        <div class="d-flex justify-content-between align-items-end">
+                            <div>
+                                <small class="text-white opacity-50 d-block" style="font-size: 0.65rem;">TITULAR</small>
+                                <span class="text-white fw-bold small" id="preview-name">NOMBRE APELLIDO</span>
+                            </div>
+                            <div class="text-end">
+                                <small class="text-white opacity-50 d-block" style="font-size: 0.65rem;">VENCE</small>
+                                <span class="text-white fw-bold small" id="preview-expiry">MM/YY</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card p-3 bg-body-tertiary border-0 rounded-3">
+                <p class="small text-muted mb-0 text-center">
+                    <i class="bi bi-shield-lock-fill me-1 text-success"></i>
+                    Simulación académica — No ingreses datos reales
+                </p>
+            </div>
+        </div>
+
+        <!-- Formulario de pago -->
+        <div class="col-md-7 col-lg-8">
+            <h4 class="mb-4 fw-bold">Información de Pago</h4>
+            <div class="card shadow-sm border-0 p-4 bg-body-tertiary rounded-4">
+                <form action="{% url 'agendamiento:pasarela_cita' factura.id %}" method="POST" id="payment-form" novalidate>
+                    {% csrf_token %}
+
+                    <div class="row gy-3">
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Nombre en la tarjeta</label>
+                            <input type="text" class="form-control form-control-lg rounded-3"
+                                   id="card-name" placeholder="Como aparece en el plástico"
+                                   autocomplete="off" required>
+                            <div class="invalid-feedback">Ingresa el nombre del titular.</div>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Número de tarjeta</label>
+                            <div class="input-group">
+                                <span class="input-group-text rounded-start-3 bg-body">
+                                    <i class="bi bi-credit-card" id="card-icon"></i>
+                                </span>
+                                <input type="text" class="form-control form-control-lg rounded-end-3"
+                                       id="card-number" placeholder="0000 0000 0000 0000"
+                                       maxlength="19" autocomplete="off" required>
+                            </div>
+                            <div class="invalid-feedback d-block" id="number-error"></div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Fecha de expiración</label>
+                            <input type="text" class="form-control form-control-lg rounded-3"
+                                   id="card-expiry" placeholder="MM/YY" maxlength="5"
+                                   autocomplete="off" required>
+                            <div class="invalid-feedback">Fecha inválida.</div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">CVV</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control form-control-lg rounded-start-3"
+                                       id="card-cvv" placeholder="•••" maxlength="3"
+                                       autocomplete="off" required>
+                                <span class="input-group-text rounded-end-3 bg-body"
+                                      data-bs-toggle="tooltip" title="3 dígitos al respaldo de tu tarjeta">
+                                    <i class="bi bi-question-circle text-muted"></i>
+                                </span>
+                            </div>
+                            <div class="invalid-feedback">CVV inválido.</div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4 opacity-25">
+
+                    <div class="d-flex gap-2 align-items-center mb-3">
+                        <small class="text-muted me-2">Aceptamos:</small>
+                        <span class="badge bg-primary px-3 py-2">VISA</span>
+                        <span class="badge bg-danger px-3 py-2">MasterCard</span>
+                        <span class="badge bg-warning text-dark px-3 py-2">AMEX</span>
+                    </div>
+
+                    <div class="alert alert-warning border-0 shadow-sm d-flex align-items-center rounded-3">
+                        <i class="bi bi-info-circle-fill fs-4 me-3 flex-shrink-0"></i>
+                        <div class="small">
+                            <strong>MODO PRUEBA:</strong> Sistema académico. No uses datos reales. El pago será simulado.
+                        </div>
+                    </div>
+
+                    <button class="w-100 btn btn-primary btn-lg rounded-pill fw-bold shadow mt-3 py-3"
+                            type="submit" id="btn-pagar">
+                        <i class="bi bi-lock-fill me-2"></i>
+                        <span id="btn-text">Confirmar Pago de ${{ factura.total|floatformat:0|intcomma }}</span>
+                        <div id="btn-spinner" class="spinner-border spinner-border-sm d-none ms-2" role="status"></div>
+                    </button>
+
+                    <a href="{% url 'mis_citas' %}" class="btn btn-link w-100 mt-3 text-muted text-decoration-none">
+                        <i class="bi bi-arrow-left me-1"></i> Cancelar y volver a mis citas
+                    </a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .credit-card { width: 100%; height: 220px; perspective: 1000px; }
+    .credit-card-inner { width: 100%; height: 220px; }
+    .credit-card-front {
+        background: linear-gradient(135deg, #1a56db, #0ea5e9);
+        border-radius: 16px; padding: 20px 24px; height: 220px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        display: flex; flex-direction: column; justify-content: space-between;
+    }
+    .chip { width: 40px; height: 30px; background: linear-gradient(135deg, #d4a843, #f0c040); border-radius: 6px; }
+    .letter-spacing { letter-spacing: 2px; font-size: 1rem !important; }
+    .form-control { border: 1.5px solid #e2e8f0 !important; transition: all 0.2s ease; }
+    .form-control:focus { border-color: #0d6efd !important; box-shadow: 0 0 0 3px rgba(13,110,253,0.15) !important; }
+    .form-control.is-valid { border-color: #28a745 !important; }
+    .form-control.is-invalid { border-color: #dc3545 !important; }
+    [data-bs-theme="dark"] .form-control { border-color: #334155 !important; background-color: #1e293b !important; }
+    [data-bs-theme="dark"] .input-group-text { background-color: #1e293b !important; border-color: #334155 !important; }
+</style>
+
+<script>
+    const cardName = document.getElementById('card-name');
+    const cardNumber = document.getElementById('card-number');
+    const cardExpiry = document.getElementById('card-expiry');
+    const cardIcon = document.getElementById('card-icon');
+
+    cardName.addEventListener('input', function() {
+        document.getElementById('preview-name').textContent = this.value.toUpperCase() || 'NOMBRE APELLIDO';
+    });
+
+    cardNumber.addEventListener('input', function() {
+        let val = this.value.replace(/\D/g, '').substring(0, 16);
+        this.value = val.replace(/(.{4})/g, '$1 ').trim();
+        const preview = val.padEnd(16, '•');
+        document.getElementById('preview-number').textContent = preview.replace(/(.{4})/g, '$1 ').trim();
+        if (val.startsWith('4')) cardIcon.className = 'bi bi-credit-card text-primary';
+        else if (val.startsWith('5')) cardIcon.className = 'bi bi-credit-card text-danger';
+        else if (val.startsWith('3')) cardIcon.className = 'bi bi-credit-card text-warning';
+        else cardIcon.className = 'bi bi-credit-card';
+    });
+
+    cardExpiry.addEventListener('input', function() {
+        let val = this.value.replace(/\D/g, '').substring(0, 4);
+        if (val.length >= 2) val = val.substring(0,2) + '/' + val.substring(2);
+        this.value = val;
+        document.getElementById('preview-expiry').textContent = val || 'MM/YY';
+    });
+
+    document.getElementById('payment-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        let valid = true;
+
+        if (cardName.value.trim().length < 3) {
+            cardName.classList.add('is-invalid'); valid = false;
+        } else { cardName.classList.remove('is-invalid'); cardName.classList.add('is-valid'); }
+
+        const numVal = cardNumber.value.replace(/\s/g, '');
+        if (numVal.length !== 16) {
+            cardNumber.classList.add('is-invalid');
+            document.getElementById('number-error').textContent = 'Ingresa los 16 dígitos de tu tarjeta.';
+            valid = false;
+        } else {
+            cardNumber.classList.remove('is-invalid'); cardNumber.classList.add('is-valid');
+            document.getElementById('number-error').textContent = '';
+        }
+
+        if (!/^\d{2}\/\d{2}$/.test(cardExpiry.value)) {
+            cardExpiry.classList.add('is-invalid'); valid = false;
+        } else { cardExpiry.classList.remove('is-invalid'); cardExpiry.classList.add('is-valid'); }
+
+        const cvvVal = document.getElementById('card-cvv').value;
+        if (cvvVal.length !== 3) {
+            document.getElementById('card-cvv').classList.add('is-invalid'); valid = false;
+        } else { document.getElementById('card-cvv').classList.remove('is-invalid'); document.getElementById('card-cvv').classList.add('is-valid'); }
+
+        if (valid) {
+            document.getElementById('btn-text').innerText = "Procesando pago...";
+            document.getElementById('btn-spinner').classList.remove('d-none');
+            document.getElementById('btn-pagar').classList.add('disabled');
+            this.submit();
+        }
+    });
+
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    tooltipTriggerList.forEach(el => new bootstrap.Tooltip(el));
+</script>
+{% endblock %}

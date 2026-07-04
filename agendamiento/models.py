@@ -2,6 +2,33 @@ from django.db import models
 from django.conf import settings
 from cloudinary.models import CloudinaryField
 
+class Operario(models.Model):
+    nombre = models.CharField(max_length=100)
+    apellido = models.CharField(max_length=100)
+    telefono = models.CharField(max_length=20, blank=True)
+    especialidad = models.CharField(max_length=100, blank=True)
+    imagen = CloudinaryField('imagen', null=True, blank=True)
+    activo = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"{self.nombre} {self.apellido}"
+
+    def esta_disponible(self, fecha_hora, duracion, excluir_cita_id=None):
+        """Verifica si el operario está disponible en el rango de tiempo dado"""
+        from django.utils import timezone
+        fecha_fin = fecha_hora + duracion
+        citas = Cita.objects.filter(
+            operario=self,
+            estado__in=['PENDIENTE', 'CONFIRMADA']
+        )
+        if excluir_cita_id:
+            citas = citas.exclude(id=excluir_cita_id)
+        for cita in citas:
+            cita_fin = cita.fecha_hora + cita.servicio.duracion_estimada
+            if fecha_hora < cita_fin and fecha_fin > cita.fecha_hora:
+                return False
+        return True
+
 class Servicio(models.Model):
     nombre = models.CharField(max_length=100)
     descripcion = models.TextField(blank=True)
@@ -27,6 +54,13 @@ class Cita(models.Model):
         related_name='citas'
     )
     servicio = models.ForeignKey(Servicio, on_delete=models.PROTECT)
+    operario = models.ForeignKey(
+        Operario,
+        on_delete=models.PROTECT,
+        related_name='citas',
+        null=True,
+        blank=True
+    )
     fecha_hora = models.DateTimeField()
     placa_vehiculo = models.CharField(max_length=10)
     notas = models.TextField(blank=True, null=True)
@@ -36,11 +70,9 @@ class Cita(models.Model):
     class Meta:
         verbose_name = "Agendamiento"
         verbose_name_plural = "Agendamientos"
-        unique_together = ['fecha_hora']
 
     def __str__(self):
         return f"Cita {self.id}: {self.usuario.username} - {self.fecha_hora}"
-
 
 class Notificacion(models.Model):
     usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)

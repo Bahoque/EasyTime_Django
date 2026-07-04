@@ -35,6 +35,62 @@ class DetalleEntrada(models.Model):
         self.producto.save()
         super().save(*args, **kwargs)
 
+class Factura(models.Model):
+    ESTADOS = [
+        ('PENDIENTE', 'Pendiente'),
+        ('PAGADA', 'Pagada'),
+        ('CANCELADA', 'Cancelada'),
+    ]
+
+    cliente = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    cita = models.OneToOneField(
+        'agendamiento.Cita',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='factura'
+    )
+    fecha_emision = models.DateTimeField(auto_now_add=True)
+    estado = models.CharField(max_length=20, choices=ESTADOS, default='PENDIENTE')
+    numero = models.CharField(max_length=20, unique=True, blank=True)
+
+    @property
+    def total_servicios(self):
+        if self.cita:
+            return self.cita.servicio.precio
+        return 0
+
+    @property
+    def total_productos(self):
+        return sum(item.subtotal for item in self.items.all())
+
+    @property
+    def total(self):
+        return self.total_servicios + self.total_productos
+
+    def save(self, *args, **kwargs):
+        if not self.numero:
+            ultimo = Factura.objects.order_by('-id').first()
+            numero = (ultimo.id + 1) if ultimo else 1
+            self.numero = f"FAC-{numero:04d}"
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Factura {self.numero} - {self.cliente.username}"
+
+class DetalleFactura(models.Model):
+    factura = models.ForeignKey(Factura, on_delete=models.CASCADE, related_name='items')
+    producto = models.ForeignKey(Producto, on_delete=models.PROTECT)
+    cantidad = models.PositiveIntegerField()
+    precio_unitario = models.DecimalField(max_digits=10, decimal_places=2)
+
+    @property
+    def subtotal(self):
+        return self.precio_unitario * self.cantidad
+
+    def __str__(self):
+        return f"{self.producto.nombre} x{self.cantidad}"
+
 class Venta(models.Model):
     cliente = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     fecha_venta = models.DateTimeField(auto_now_add=True)

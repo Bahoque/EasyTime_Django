@@ -61,12 +61,36 @@
                             </td>
                             <td class="custom-text-dim">${{ item.precio_unitario|floatformat:0|intcomma }}</td>
                             <td>
-                                <span class="badge bg-secondary bg-opacity-10 text-secondary-emphasis border border-secondary border-opacity-25 px-3 py-2">
-                                    {{ item.cantidad }}
-                                </span>
+
+                                <div class="d-flex align-items-center justify-content-center">
+
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline-secondary btn-sm btn-restar"
+                                        data-id="{{ item.id }}">
+                                        <i class="bi bi-dash"></i>
+                                    </button>
+
+                                    <span
+                                        id="cantidad-{{ item.id }}"
+                                        class="mx-3 fw-bold">
+                                        {{ item.cantidad }}
+                                    </span>
+
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline-secondary btn-sm btn-sumar"
+                                        data-id="{{ item.id }}">
+                                        <i class="bi bi-plus"></i>
+                                    </button>
+
+                                </div>
+
                             </td>
-                            <td class="fw-bold text-primary">
-                                ${{ item.obtener_subtotal|floatformat:0|intcomma }} 
+                            <td
+                                class="fw-bold text-primary"
+                                id="subtotal-{{ item.id }}">
+                                ${{ item.obtener_subtotal|floatformat:0|intcomma }}
                             </td>
                             <td class="text-center pe-4">
                                 <a href="{% url 'eliminar_del_carrito' item.id %}" class="btn btn-outline-danger btn-sm rounded-pill" title="Eliminar del carrito">
@@ -142,6 +166,61 @@
         });
         
         actualizarTotal();
+
+        const csrf = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+function actualizarCantidad(id, accion){
+
+    fetch(`/carrito/actualizar/${id}/`,{
+
+        method:"POST",
+
+        headers:{
+            "X-CSRFToken":csrf,
+            "Content-Type":"application/x-www-form-urlencoded"
+        },
+
+        body:new URLSearchParams({
+            accion:accion
+        })
+
+    })
+
+    .then(res=>res.json())
+
+    .then(data=>{
+
+        document.getElementById(`cantidad-${id}`).innerText=data.cantidad;
+
+        document.getElementById(`subtotal-${id}`).innerText=
+            "$"+Math.round(data.subtotal).toLocaleString("es-CO");
+
+            document.getElementById("total-carrito").innerText =
+            "$" + Math.round(data.total).toLocaleString("es-CO");
+
+    });
+
+    }
+
+    document.querySelectorAll(".btn-sumar").forEach(btn=>{
+
+        btn.onclick=()=>{
+
+            actualizarCantidad(btn.dataset.id,"sumar");
+
+        }
+
+    });
+
+    document.querySelectorAll(".btn-restar").forEach(btn=>{
+
+        btn.onclick=()=>{
+
+            actualizarCantidad(btn.dataset.id,"restar");
+
+        }
+
+    });
     });
 </script>
 

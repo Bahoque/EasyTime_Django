@@ -4,6 +4,7 @@ from django.contrib import messages
 from .models import Producto, Venta, DetalleVenta
 from .forms import ProductoForm
 from django.db import transaction
+from django.http import JsonResponse
 
 def es_administrador(user):
     return user.is_authenticated and (user.is_staff or getattr(user, 'rol', None) in ['ADMIN'])
@@ -109,6 +110,36 @@ def eliminar_del_carrito(request, item_id):
     item.delete()
     messages.warning(request, "Producto eliminado.")
     return redirect('ver_carrito')
+
+@login_required
+def actualizar_cantidad(request, item_id):
+    if request.method == "POST":
+        item = get_object_or_404(
+            DetalleVenta,
+            id=item_id,
+            venta__cliente=request.user,
+            venta__pagado=False
+        )
+
+        accion = request.POST.get("accion")
+
+        if accion == "sumar":
+            if item.cantidad < int(item.producto.stock_actual):
+                item.cantidad += 1
+
+        elif accion == "restar":
+            if item.cantidad > 1:
+                item.cantidad -= 1
+
+        item.save()
+
+        return JsonResponse({
+            "cantidad": item.cantidad,
+            "subtotal": float(item.obtener_subtotal),
+            "total": float(item.venta.obtener_total_carrito)
+        })
+
+    return JsonResponse({"error": "Método no permitido"}, status=400)
 
 @user_passes_test(es_administrador, login_url='login', redirect_field_name=None)
 def crear_producto(request):

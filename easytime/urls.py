@@ -43,6 +43,10 @@ urlpatterns = [
     path('admin-usuarios/reporte-excel/', usuarios_views.generar_excel_usuarios, name='generar_excel_usuarios'),
 
     path('agendamiento/', include('agendamiento.urls')),
+    
+    path(
+    'carrito/actualizar/<int:item_id>/', inv_views.actualizar_cantidad, name='actualizar_cantidad'
+),
 ]
 
 if settings.DEBUG:
